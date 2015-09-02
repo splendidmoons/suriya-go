@@ -2,46 +2,69 @@ package suriya
 
 import "testing"
 
-/*
-|      |      | \Delta m | Nth |
-|------+------+----------+-----|
-| 1985 | 2528 |        3 |   3 |
-| 1988 | 2531 |        3 |   6 |
-| 1990 | 2533 |        2 |   8 |
-| 1993 | 2536 |        3 |  11 |
-| 1996 | 2539 |        3 |  14 |
-| 1999 | 2542 |        3 |  17 |
-| 2001 | 2544 |        2 |  19 |
-| 2004 | 2547 |        3 |   3 |
-| 2007 | 2550 |        3 |   6 |
-| 2009 | 2552 |        2 |   8 |
-| 2012 | 2555 |        3 |  11 |
-| 2015 | 2558 |        3 |  14 |
-| 2018 | 2561 |        3 |  17 |
-| 2020 | 2563 |        2 |  19 |
-| 2023 | 2566 |        3 |   3 |
-| 2026 | 2569 |        3 |   6 |
-| 2028 | 2571 |        2 |   8 |
-| 2031 | 2574 |        3 |  11 |
-| 2034 | 2577 |        3 |  14 |
-| 2037 | 2580 |        3 |  17 |
-| 2039 | 2582 |        2 |  19 |
-*/
-
 func TestAdhikamasa(t *testing.T) {
-	su := SuriyaYear{}
-	//su.Init(2012) // wow, 2012 doesn't check out.
-	su.Init(2015)
-	mark := " "
-	if su.Is_Adhikamasa() {
-		mark = "m"
-	} else if su.Is_Adhikavara() {
-		mark = "d"
+	adhikamasaYears := map[int]bool{
+		1998: false, //
+		1999: true,  // 3
+		2000: false, //
+		2001: true,  // 2
+		2002: false, //
+		2003: false, //
+		2004: true,  // 3
+		2005: false, //
+		2006: false, //
+		2007: true,  // 3
+		2008: false, //
+		2009: true,  // 2
+		2010: false, //
+		2011: false, //
+		2012: true,  // 3
+		2013: false, //
+		2014: false, //
+		2015: true,  // 3
+		2016: false, //
 	}
 
-	expect := "m"
+	for year, expect := range adhikamasaYears {
+		su := SuriyaYear{}
+		su.Init(year)
+		res := su.Is_Adhikamasa()
+		if res != expect {
+			t.Errorf("%d.Is_Adhikamasa() should be %v, but got %v", su.Year, expect, res)
+		}
+	}
+}
 
-	if mark != expect {
-		t.Errorf("%d should be %s, but got %s", su.Year, expect, mark)
+func TestAdhikavara(t *testing.T) {
+	// Adhikavāra in FS-Cal: 2005, 2010, 2016.
+	adhikavaraYears := map[int]bool{
+		1998: false, //
+		1999: false, //
+		2000: true,  // 6
+		2001: false, //
+		2002: false, //
+		2003: false, //
+		2004: false, //
+		2005: true,  // 5
+		2006: false, //
+		2007: false, //
+		2008: false, //
+		2009: false, //
+		2010: true,  // 5
+		2011: false, //
+		2012: false, //
+		2013: false, //
+		2014: false, //
+		2015: false, //
+		2016: true,  // 6
+	}
+
+	for year, expect := range adhikavaraYears {
+		su := SuriyaYear{}
+		su.Init(year)
+		res := su.Is_Adhikavara()
+		if res != expect {
+			t.Errorf("%d.Is_Adhikavara() should be %v, but got %v", su.Year, expect, res)
+		}
 	}
 }

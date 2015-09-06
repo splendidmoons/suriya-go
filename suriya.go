@@ -9,7 +9,7 @@ import (
 
 type SuriyaYear struct {
 	Year        int // Common Era
-	BE_year     int // Buddhist Era, CE - 543
+	BE_year     int // Buddhist Era, CE + 543
 	CS_year     int // Chulasakkarat Era, CE - 638
 	Horakhun    int // Elapsed days of the era
 	Kammacubala int // Remaining 800ths of a day
@@ -78,10 +78,10 @@ func (su *SuriyaYear) calculateSuriyaValues() {
 	// === A. Find the relevant values for the astronomical New Year ===
 
 	a = (su.CS_year * eraDays) + 373
-	su.Horakhun = int(math.Floor(float64(a/800 + 1)))
+	su.Horakhun = int(math.Floor(float64(a/eraYears + 1)))
 	// Horakhun = 483969
 
-	su.Kammacubala = 800 - a%800
+	su.Kammacubala = eraYears - a%eraYears
 	// Kammacubala = 552
 
 	su.Uccabala = (su.Horakhun + 2611) % 3232

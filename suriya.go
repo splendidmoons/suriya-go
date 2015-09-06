@@ -214,10 +214,62 @@ func (su SuriyaYear) AsalhaPuja() time.Time {
 		days = days + 1
 	}
 
-	// On January 1, the first month (29 days) passed, and the age of the moon is the Tithi
-	days = days - 29 - su.Tithi + 1
+	// On January 1, the first month (30 days) passed, and the age of the moon is the Tithi
+	// for some reason it needs a +2 offset
+	days = days - 30 - su.Tithi + 2
 
 	date, _ := time.Parse("2006-01-02", fmt.Sprintf("%d-01-01", su.Year))
 	date = date.AddDate(0, 0, days)
+	return date
+}
+
+// Date of Asalha Puja
+func (su SuriyaYear) AsalhaPujaStepping() time.Time {
+
+	dF := "2006-01-02"
+
+	// find the first day of the lunar year by stepping back from a known point
+	// First day of 2557
+	smallEpoch, _ := time.Parse(dF, "2013-11-18")
+	// forward stepping by default
+	direction := 1
+	if smallEpoch.Year() >= su.Year {
+		// backward stepping otherwise
+		direction = -1
+	}
+
+	newYearsDay := smallEpoch
+
+	for year := smallEpoch.Year() + 1; year != su.Year; year += direction {
+		//fmt.Printf("%d\n", year)
+		var stepSu SuriyaYear
+		stepSu.Init(year)
+		//fmt.Printf("Add %d\n", stepSu.YearLength()*direction)
+		newYearsDay = newYearsDay.Add(time.Duration(stepSu.YearLength()*direction) * 24 * time.Hour)
+	}
+
+	// In a common year, Asalha Puja is the last day of the 8th month.
+	days := 4 * (29 + 30)
+	if su.Is_Adhikamasa() {
+		// In an adhikamāsa year, the extra month (2nd Asalha) is a 30 day month.
+		days += 30
+	} else if su.Is_Adhikavara() {
+		// In an adhikavāra year, the 8th month (Asalha) is 30 days instead of 29 days.
+		days += 1
+	}
+
+	/*
+		// On January 1, the first month (30 days) passed, and the age of the moon is the Tithi
+		// for some reason it needs a +2 offset
+		days = days - 30 - su.Tithi + 2
+	*/
+
+	//date, _ := time.Parse(dF, fmt.Sprintf("%d-01-01", su.Year))
+	//date = date.AddDate(0, 0, days)
+
+	// some offset
+	days -= 1
+
+	date := newYearsDay.Add(time.Duration(days) * 24 * time.Hour)
 	return date
 }

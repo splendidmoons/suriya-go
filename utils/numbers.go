@@ -11,16 +11,19 @@ func main() {
 	//suYear.Init(1963) // CS 1325
 	//suYear.Init(1496) // CS 858
 
-	suYear.Init(2015)
+	suYear.Init(2016)
 
 	fmt.Print(suYear.SuriyaValuesString())
+	fmt.Printf("%v\n", suYear.AsalhaPuja())
 
-	fmt.Println("---")
+	/*
+		fmt.Println("---")
 
-	suNext := suriya.SuriyaYear{}
-	suNext.Init(2016)
+		suNext := suriya.SuriyaYear{}
+		suNext.Init(2016)
 
-	fmt.Print(suNext.SuriyaValuesString())
+		fmt.Print(suNext.SuriyaValuesString())
 
-	fmt.Printf("%d\n", suNext.Horakhun-suYear.Horakhun)
+		fmt.Printf("%d\n", suNext.Horakhun-suYear.Horakhun)
+	*/
 }

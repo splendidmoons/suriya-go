@@ -1,6 +1,7 @@
 package suriya
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -8,17 +9,22 @@ import (
 
 type SuriyaYear struct {
 	Year        int // Common Era
-	BE_year     int // Buddhist Era
-	CS_year     int // Thai Era
-	Horakhun    int
-	Kammacubala int
-	Uccabala    int
-	Avoman      int
-	Thaloengsok int
+	BE_year     int // Buddhist Era, CE - 543
+	CS_year     int // Chulasakkarat Era, CE - 638
+	Horakhun    int // Elapsed days of the era
+	Kammacubala int // Remaining 800ths of a day
+	Uccabala    int // Age of the moon's Apogee
+	Avoman      int // For the Moon's mean motion
+	Masaken     int // Elapsed months of the era
+	Tithi       int // Age of the moon at the start of the year, also called Thaloengsok or New Year's Day
+	//MeanSun     float64
+	//TrueSun     float64
+	//MeanMoon    float64
+	//TrueMoon    float64
 }
 
 func (su SuriyaYear) Is_Adhikamasa() bool {
-	t := su.Thaloengsok
+	t := su.Tithi
 	// TODO: check this against the definition again in the papers.
 	return (t >= 21 && t <= 29) || (t >= 0 && t <= 1)
 }
@@ -42,17 +48,70 @@ func (su SuriyaYear) String() string {
 func (su *SuriyaYear) Init(ce_year int) {
 	su.Year = ce_year
 	su.BE_year = su.Year + 543
-	su.kat()
+	su.CS_year = su.Year - 638
+	su.calculateSuriyaValues()
 }
 
-func (su *SuriyaYear) kat() {
-	su.CS_year = su.Year - 638
-	a := (su.CS_year * 292207) + 373
-	su.Horakhun = int(math.Floor(float64(a)/800 + 1))
+func (su *SuriyaYear) SuriyaValuesString() string {
+	fmtStr := `CE: %d
+BE: %d
+CS: %d
+Horakhun: %d
+Kammacubala: %d
+Uccabala: %d
+Avoman: %d
+Masaken: %d
+Tithi: %d
+`
+
+	return fmt.Sprintf(fmtStr, su.Year, su.BE_year, su.CS_year, su.Horakhun, su.Kammacubala, su.Uccabala, su.Avoman, su.Masaken, su.Tithi)
+}
+
+func (su *SuriyaYear) calculateSuriyaValues() {
+	// Eade, p.10. South Asian traditional number of days in 800 years
+	const eraDays = 292207
+	const eraYears = 800
+	var a int // just a helper variable
+
+	// Take CE 1963, CS 1325 (as in the paper: "Rules for Interpolation...")
+
+	// === A. Find the relevant values for the astronomical New Year ===
+
+	a = (su.CS_year * eraDays) + 373
+	su.Horakhun = int(math.Floor(float64(a/800 + 1)))
+	// Horakhun = 483969
+
 	su.Kammacubala = 800 - a%800
-	//su.Uccabala = (su.Horakhun + 2611) % 3232 // This doesn't seem to be used.
+	// Kammacubala = 552
+
+	su.Uccabala = (su.Horakhun + 2611) % 3232
+	// Uccabala = 1780
+
 	su.Avoman = ((su.Horakhun * 11) + 650) % 692
-	su.Thaloengsok = int((math.Floor(((float64(su.Horakhun)*11)+650)/692) + float64(su.Horakhun))) % 30
+	// Avoman = 61
+
+	a = int(math.Floor(float64(((su.Horakhun * 11) + 650) / 692)))
+	su.Masaken = (a + su.Horakhun) / 30
+	// Masaken = 16388
+
+	su.Tithi = (a + su.Horakhun) % 30
+	// Tithi = 23
+
+	// === B. Find the position of the Mean and true Sun on Asalha 15 ===
+
+	/*
+		// TODO
+		// interval from 1 Caitra (Visakha New Moon - 1) to Ashalha Full Moon, minus NY day
+		deltaVA := 103 - su.Tithi
+		// deltaVA = 80
+
+		a = (deltaVA * eraYears) + su.Kammacubala
+		su.MeanSun = float64(((a / eraDays) * 360)) - math.Pow(3, 13)
+		fmt.Printf("MeanSun: %v\n", su.MeanSun)
+	*/
+
+	// === C. Find the Mean and True Moon on Asalha 15 ===
+
 }
 
 func (su SuriyaYear) KatString() string {
@@ -60,7 +119,7 @@ func (su SuriyaYear) KatString() string {
 		[]string{
 			strconv.Itoa(su.Kammacubala),
 			strconv.Itoa(su.Avoman),
-			strconv.Itoa(su.Thaloengsok),
+			strconv.Itoa(su.Tithi),
 		}, ",",
 	)
 	return kat

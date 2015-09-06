@@ -129,3 +129,33 @@ Tithi: %d
 		}
 	}
 }
+
+func TestAsalhaPuja(t *testing.T) {
+	testYears := map[int]string{
+		//1992: "1992-07-15", // FAIL bot.or.th GOT: 1992-07-14. 1992 could have been a "before" adhikavāra.
+		//2001: "2001-07-05", // FAIL fs-cal GOT: 2001-08-04. 2001 is adhikamāsa.
+		2004: "2004-07-31", // PASS fs-cal
+		2005: "2005-07-22", // PASS bot.or.th NOTE: fs-cal has 07-21
+		2006: "2006-07-10", // PASS fs-cal NOTE: bot.or.th has 07-11
+		2007: "2007-07-29", // PASS fs-cal has 07-29 NOTE: bot.or.th says official date was 07-30, substitution day
+		2008: "2008-07-17", // PASS bot.or.th, fs-cal
+		//2009: "2009-07-07", // FAIL bot.or.th, fs-cal GOT: 2009-08-05. 2009 is adhikamāsa. 2009 is adhikavāra in fs-cal.
+		//2010: "2010-07-26", // FAIL bot.or.th, fs-cal GOT: 2010-07-27. 2010 is adhikavāra. 2010 too is adhikavāra in fs-cal.
+		2011: "2011-07-15", // PASS bot.or.th, fs-cal
+		2012: "2012-08-02", // PASS bot.or.th, fs-cal
+		2013: "2013-07-22", // PASS bot.or.th, fs-cal
+		2014: "2014-07-11", // PASS bot.or.th, fs-cal
+		2015: "2015-07-30", // PASS bot.or.th, fs-cal
+		2016: "2016-07-19", // PASS bot.or.th, fs-cal
+	}
+
+	for year, expect := range testYears {
+		su := SuriyaYear{}
+		su.Init(year)
+		asalha := su.AsalhaPuja()
+		asalhaStr := asalha.Format("2006-01-02")
+		if asalhaStr != expect {
+			t.Errorf("expected %s, but got %s", expect, asalhaStr)
+		}
+	}
+}

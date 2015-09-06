@@ -5,6 +5,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type SuriyaYear struct {
@@ -185,4 +186,38 @@ func (su SuriyaYear) DeltaAdhikavara() int {
 		}
 	}
 	return -1
+}
+
+// Length of the lunar year in days
+func (su SuriyaYear) YearLength() int {
+	// In a common year, there are six alternating 29 and 30 day lunar months.
+	days := 6 * (30 + 29)
+	if su.Is_Adhikamasa() {
+		// In an adhikamāsa year, there is an extra 30 day month.
+		days = days + 30
+	} else if su.Is_Adhikavara() {
+		// In an adhikavāra year, there is an extra day.
+		days = days + 1
+	}
+	return days
+}
+
+// Date of Asalha Puja
+func (su SuriyaYear) AsalhaPuja() time.Time {
+	// In a common year, Asalha Puja is the last day of the 8th month.
+	days := 4 * (29 + 30)
+	if su.Is_Adhikamasa() {
+		// In an adhikamāsa year, the extra month (2nd Asalha) is a 30 day month.
+		days = days + 30
+	} else if su.Is_Adhikavara() {
+		// In an adhikavāra year, the 8th month (Asalha) is 30 days instead of 29 days.
+		days = days + 1
+	}
+
+	// On January 1, the first month (29 days) passed, and the age of the moon is the Tithi
+	days = days - 29 - su.Tithi + 1
+
+	date, _ := time.Parse("2006-01-02", fmt.Sprintf("%d-01-01", su.Year))
+	date = date.AddDate(0, 0, days)
+	return date
 }

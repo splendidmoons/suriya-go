@@ -154,7 +154,7 @@ func main() {
 		return
 	}
 
-	n, err := io.WriteString(file, yearsCsv(1984, 2040))
+	n, err := io.WriteString(file, yearsCsv(1957, 2040))
 	if err != nil {
 		fmt.Println(n, err)
 	}

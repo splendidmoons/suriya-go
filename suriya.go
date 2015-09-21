@@ -32,7 +32,7 @@ type UposathaMoon struct {
 	S_Total       int    // total number of uposathas in the season, 8 in Hemanta
 	U_Days        int    // uposatha days, 14 or 15
 	M_Days        int    // month days, 29 or 30
-	LunarMonth    int    // 1-12, 13 is 2nd asalha (adhikamasa). Odd numbers are 30 day months.
+	LunarMonth    int    // 1-12, 13 is 2nd Asalha (adhikamasa). Odd numbers are 30 day months.
 	LunarSeason   int    // 1-3, an int code to an []string array of names
 	LunarYear     int
 	HasAdhikavara bool
@@ -44,9 +44,17 @@ type HalfMoon struct {
 }
 
 func (su SuriyaYear) Is_Adhikamasa() bool {
+	// If next year also qualifies for adhikamāsa, then this year isn't
+	var su_next SuriyaYear
+	su_next.Init(su.Year + 1)
+	return !su_next.Would_Be_Adhikamasa() && su.Would_Be_Adhikamasa()
+}
+
+func (su SuriyaYear) Would_Be_Adhikamasa() bool {
 	t := su.Tithi
 	// TODO: check this against the definition again in the papers.
-	return (t >= 21 && t <= 29) || (t >= 0 && t <= 1)
+	//return (t >= 21 && t <= 29) || (t >= 0 && t <= 1)
+	return (t >= 24 && t <= 29) || (t >= 0 && t <= 5)
 }
 
 func (su SuriyaYear) Is_Adhikavara() bool {

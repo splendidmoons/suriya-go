@@ -7,25 +7,71 @@ import (
 
 func TestAdhikamasa(t *testing.T) {
 	adhikamasaYears := map[int]bool{
+		// --- T = thaiorc.com, M = myhora.com, F = fs-cal, K = Khemanando
+		//              T M F K
+		1957: false, //
+		1958: true,  // x x
+		1959: false, //
+		1960: false, //
+		1961: true,  // 3 3
+		1962: false, //
+		1963: false, //
+		1964: true,  // 3 3
+		1965: false, //
+		1966: true,  // 2 2
+		1967: false, //
+		1968: false, //
+		1969: true,  // 3 3
+		1970: false, //
+		1971: false, //
+		1972: true,  // 3 3
+		1973: false, //
+		1974: false, //
+		1975: true,  // 3 3
+		1976: false, //
+		1977: true,  // 2 2
+		1978: false, //
+		1979: false, //
+		1980: true,  // 3 3
+		1981: false, //
+		1982: false, //
+		1983: true,  // 3 3
+		1984: false, //
+		1985: true,  // 2 2  	K
+		1986: false, //
+		1987: false, //
+		1988: true,  // 3 3  	K
+		1989: false, //
+		1990: false, //       K
+		1991: true,  // 3 3
+		1992: false, //
+		1993: true,  // 2 2  	K
+		1994: false, //
+		1995: false, //
+		1996: true,  // 3 3  	K
+		1997: false, //
 		1998: false, //
-		1999: true,  // 3
+		1999: true,  // 3 3  	K
 		2000: false, //
-		2001: true,  // 2
-		2002: false, //
+		2001: false, //       K
+		2002: true,  // 3 3 ?
 		2003: false, //
-		2004: true,  // 3
+		2004: true,  // 2 2 2	K
 		2005: false, //
 		2006: false, //
-		2007: true,  // 3
+		2007: true,  // 3 3 3
 		2008: false, //
-		2009: true,  // 2
-		2010: false, //
+		2009: false, //
+		2010: true,  // 3 3 3
 		2011: false, //
-		2012: true,  // 3
+		2012: true,  // 2 2 2
 		2013: false, //
 		2014: false, //
-		2015: true,  // 3
+		2015: true,  // 3 3 3
 		2016: false, //
+		2017: false, //
+		2018: true,  // 3 3
+		// ---
 	}
 
 	for year, expect := range adhikamasaYears {
@@ -39,7 +85,7 @@ func TestAdhikamasa(t *testing.T) {
 }
 
 func TestAdhikavara(t *testing.T) {
-	// Adhikavāra in FS-Cal: 2005, 2010, 2016.
+	// Adhikavāra in FS-Cal: 2005, 2009, 2016.
 	adhikavaraYears := map[int]bool{
 		1998: false, //
 		1999: false, //
@@ -48,18 +94,18 @@ func TestAdhikavara(t *testing.T) {
 		2002: false, //
 		2003: false, //
 		2004: false, //
-		2005: true,  // 5
+		2005: true,  // 5 FS Cal
 		2006: false, //
 		2007: false, //
 		2008: false, //
-		2009: false, //
-		2010: true,  // 5
+		2009: true,  // 4 FS Cal confirms it
+		2010: false, //
 		2011: false, //
 		2012: false, //
 		2013: false, //
 		2014: false, //
 		2015: false, //
-		2016: true,  // 6
+		2016: true,  // 7 FS Cal
 	}
 
 	for year, expect := range adhikavaraYears {

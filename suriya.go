@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -22,6 +21,26 @@ type SuriyaYear struct {
 	//TrueSun     float64
 	//MeanMoon    float64
 	//TrueMoon    float64
+}
+
+type UposathaMoon struct {
+	Date          time.Time
+	Calendar      int    // mahanikaya, dhammayut, srilanka, myanmar
+	Status        int    // draft, predicted, confirmed
+	Phase         string // only new or full. waxing and waning will be derived.
+	S_Number      int    // 1 of 8 in Hemanta
+	S_Total       int    // total number of uposathas in the season, 8 in Hemanta
+	U_Days        int    // uposatha days, 14 or 15
+	M_Days        int    // month days, 29 or 30
+	LunarMonth    int    // 1-12, 13 is 2nd asalha (adhikamasa). Odd numbers are 30 day months.
+	LunarSeason   int    // 1-3, an int code to an []string array of names
+	LunarYear     int
+	HasAdhikavara bool
+}
+
+type HalfMoon struct {
+	Date  time.Time
+	Phase string
 }
 
 func (su SuriyaYear) Is_Adhikamasa() bool {
@@ -113,17 +132,6 @@ func (su *SuriyaYear) calculateSuriyaValues() {
 
 	// === C. Find the Mean and True Moon on Asalha 15 ===
 
-}
-
-func (su SuriyaYear) KatString() string {
-	kat := strings.Join(
-		[]string{
-			strconv.Itoa(su.Kammacubala),
-			strconv.Itoa(su.Avoman),
-			strconv.Itoa(su.Tithi),
-		}, ",",
-	)
-	return kat
 }
 
 func (su SuriyaYear) Is_Suriya_Leap() bool {
@@ -272,4 +280,217 @@ func (su SuriyaYear) AsalhaPujaStepping() time.Time {
 
 	date := newYearsDay.Add(time.Duration(days) * 24 * time.Hour)
 	return date
+}
+
+var monthToInt = map[string]int{
+	"null":       0,
+	"magasira":   1,
+	"phussa":     2,
+	"magha":      3,
+	"phagguna":   4,
+	"citta":      5,
+	"visakha":    6,
+	"jettha":     7,
+	"asalha":     8,
+	"savana":     9,
+	"bhaddapada": 10,
+	"assayuja":   11,
+	"kattika":    12,
+	"2nd asalha": 13,
+}
+
+func MonthToInt(month string) int {
+	return monthToInt[month]
+}
+
+var seasonToInt = map[string]int{
+	"null":    0,
+	"hemanta": 1,
+	"gimhana": 2,
+	"vassana": 3,
+}
+
+func SeasonToInt(season string) int {
+	return seasonToInt[season]
+}
+
+var seasonName = map[int]string{
+	0: "",
+	1: "Hemanta",
+	2: "Gimha",
+	3: "Vassāna",
+}
+
+func SeasonName(number int) string {
+	return seasonName[number]
+}
+
+var calendarToInt = map[string]int{
+	"mahanikaya": 0,
+	"dhammayut":  1,
+	"srilanka":   2,
+	"myanmar":    3,
+}
+
+func CalendarToInt(calendar string) int {
+	return calendarToInt[calendar]
+}
+
+var statusToInt = map[string]int{
+	"draft":     0,
+	"predicted": 1,
+	"confirmed": 2,
+}
+
+func StatusToInt(status string) int {
+	return statusToInt[status]
+}
+
+func NextUposatha(last_uposatha UposathaMoon) UposathaMoon {
+
+	lu := last_uposatha
+	var nu UposathaMoon // next uposatha
+
+	var su_year SuriyaYear
+	su_year.Init(lu.Date.Year())
+
+	is_adhikamasa_year := su_year.Is_Adhikamasa()
+	is_adhikavara_year := su_year.Is_Adhikavara()
+
+	nu.Status = 0   // predicted
+	nu.Calendar = 0 // mahanikaya
+
+	// Alternating New Moon and Full Moon uposathas.
+
+	if lu.Phase == "new" {
+		nu.Phase = "full"
+	} else {
+		nu.Phase = "new"
+	}
+
+	if nu.Phase == "full" {
+
+		// A Full Moon uposatha is always 15 days in the same month, season and year as the last uposatha.
+
+		nu.S_Number = lu.S_Number + 1
+		nu.S_Total = lu.S_Total
+		nu.U_Days = 15
+		nu.M_Days = lu.M_Days
+		nu.LunarMonth = lu.LunarMonth
+		nu.LunarSeason = lu.LunarSeason
+		nu.LunarYear = lu.LunarYear
+		nu.HasAdhikavara = false // Adhikavara is only added to New Moons
+	} else {
+
+		// The New Moon uposatha begins a new month.
+
+		if lu.LunarMonth == 13 {
+			nu.LunarMonth = 9 // Savana after 2nd Asalha
+		} else if lu.LunarMonth == 8 && is_adhikamasa_year {
+			nu.LunarMonth = 13 // 2nd Asalha
+		} else if lu.LunarMonth == 12 {
+			nu.LunarMonth = 1
+		} else {
+			nu.LunarMonth = lu.LunarMonth + 1
+		}
+
+		// Odd numbered months are 30 days, except in adhikavāra years when the 8th month is 30 days.
+
+		if is_adhikavara_year && nu.LunarMonth == 8 {
+			nu.HasAdhikavara = true
+			nu.M_Days = 30
+		} else {
+			if nu.LunarMonth%2 == 1 {
+				nu.M_Days = 30
+			} else {
+				nu.M_Days = 29
+			}
+		}
+
+		if nu.M_Days == 29 {
+			nu.U_Days = 14
+		} else {
+			nu.U_Days = 15
+		}
+
+		// Season
+
+		// In an adhikamāsa year the Hot Season is 10 uposatha long
+
+		if is_adhikamasa_year && ((nu.LunarMonth >= 5 && nu.LunarMonth <= 8) || nu.LunarMonth == 13) {
+			nu.S_Total = 10
+		} else {
+			nu.S_Total = 8
+		}
+
+		// If the last uposatha was not the last of the season, increment
+
+		if lu.S_Number < lu.S_Total {
+			nu.S_Number = lu.S_Number + 1
+			nu.LunarSeason = lu.LunarSeason
+			nu.LunarYear = lu.LunarYear
+		} else {
+
+			// Else, it is the first uposatha of the season
+
+			nu.S_Number = 1
+			// is it a new lunar year?
+			if lu.LunarMonth == 12 {
+				nu.LunarSeason = 1
+				nu.LunarYear = lu.LunarYear + 1
+			} else {
+				nu.LunarSeason = lu.LunarSeason + 1
+				nu.LunarYear = lu.LunarYear
+			}
+		}
+	}
+
+	nu.Date = lu.Date.Add(time.Duration(nu.U_Days) * time.Hour * 24)
+
+	return nu
+}
+
+// Calculate the kattika full moon before this year
+func CalculatePreviousKattika(solar_year int) UposathaMoon {
+
+	// Use a known Kattika date
+	kattika_date, _ := time.Parse("2006-01-02", "2015-11-25")
+
+	var direction int
+	if kattika_date.Year() < solar_year-1 {
+		direction = 1
+	} else if kattika_date.Year() > solar_year-1 {
+		direction = -1
+	}
+
+	// Step until the Kattika in the prev. solar year
+	for y := kattika_date.Year(); y != solar_year-1; y += direction {
+		var su_year SuriyaYear
+		var n int
+		if direction == 1 {
+			su_year.Init(y + 1)
+		} else {
+			su_year.Init(y)
+		}
+		n = 6*29 + 6*30
+		if su_year.Is_Adhikamasa() {
+			n += 30
+		} else if su_year.Is_Adhikavara() {
+			n += 1
+		}
+		kattika_date = kattika_date.Add(time.Duration(n*direction) * time.Hour * 24)
+	}
+
+	return UposathaMoon{
+		Date:        kattika_date,
+		Calendar:    0, // mahanikaya
+		Phase:       "full",
+		S_Number:    8,
+		S_Total:     8,
+		U_Days:      15,
+		M_Days:      29,
+		LunarMonth:  12,
+		LunarSeason: 3,
+		LunarYear:   kattika_date.Year() + 543,
+	}
 }

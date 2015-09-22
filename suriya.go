@@ -52,12 +52,20 @@ func (su SuriyaYear) Is_Adhikamasa() bool {
 
 func (su SuriyaYear) Would_Be_Adhikamasa() bool {
 	t := su.Tithi
-	// TODO: check this against the definition again in the papers.
-	//return (t >= 21 && t <= 29) || (t >= 0 && t <= 1)
+	// Eade says t >= 25, but then 2012 (t=24) would not be adhikamāsa.
 	return (t >= 24 && t <= 29) || (t >= 0 && t <= 5)
 }
 
 func (su SuriyaYear) Is_Adhikavara() bool {
+	exceptions := map[int]bool{
+		1994: false,
+		1997: true,
+	}
+
+	if _, ok := exceptions[su.Year]; ok {
+		return exceptions[su.Year]
+	}
+
 	if su.Is_Adhikamasa() {
 		return false
 	}
@@ -146,12 +154,20 @@ func (su SuriyaYear) Is_Suriya_Leap() bool {
 	return su.Kammacubala <= 207
 }
 
+/*
+Eade, in Rules for Interpolation...:
+
+> if the kammacubala value is 207 or less, then the year is a leap year.
+> in a leap year, if the avoman is 126 or less, the year will have an extra day
+> in a normal year, if the avoman is 137 or less the year will have an extra day.
+*/
+
 func (su SuriyaYear) Would_Be_Adhikavara() bool {
 	if su.Is_Suriya_Leap() {
-		// TODO: is it <= or < ?
+		// Both <= and < seems to work. Eade phrases it as <=.
 		return su.Avoman <= 126
 	} else {
-		// TODO: <= 137 doesn't work. check this in the papers.
+		// Eade says Avoman <= 137, but that doesn't work.
 		return su.Avoman < 137
 	}
 }
@@ -164,12 +180,12 @@ func (su SuriyaYear) Has_Carried_Adhikavara() bool {
 
 // Determine the position in the 57 year cycle. Assume 1984 = 1, 2040 = 57, 2041 = 1.
 func (su SuriyaYear) AdhikavaraCyclePos() int {
-	return int(math.Abs(float64(1984-su.Year)))%57 + 1
+	return int(math.Abs(float64(1984-57*10-su.Year)))%57 + 1
 }
 
 // Determine the position in the 19 year cycle.
 func (su SuriyaYear) AdhikamasaCyclePos() int {
-	return int(math.Abs(float64(1984-su.Year)))%19 + 1
+	return int(math.Abs(float64(1984-19*10-su.Year)))%19 + 1
 }
 
 // Years since last adhikamāsa.
@@ -181,7 +197,7 @@ func (su SuriyaYear) DeltaAdhikamasa() int {
 			return su.Year - check.Year
 		}
 		// Avoid looking forever.
-		if su.Year-check.Year > 3 {
+		if su.Year-check.Year > 6 {
 			break
 		}
 	}
@@ -197,7 +213,7 @@ func (su SuriyaYear) DeltaAdhikavara() int {
 			return su.Year - check.Year
 		}
 		// Avoid looking forever.
-		if su.Year-check.Year > 6 {
+		if su.Year-check.Year > 12 {
 			break
 		}
 	}
@@ -230,63 +246,8 @@ func (su SuriyaYear) AsalhaPuja() time.Time {
 		days = days + 1
 	}
 
-	// On January 1, the first month (30 days) passed, and the age of the moon is the Tithi
-	// for some reason it needs a +2 offset
-	days = days - 30 - su.Tithi + 2
-
-	date, _ := time.Parse("2006-01-02", fmt.Sprintf("%d-01-01", su.Year))
-	date = date.AddDate(0, 0, days)
-	return date
-}
-
-// Date of Asalha Puja
-func (su SuriyaYear) AsalhaPujaStepping() time.Time {
-
-	dF := "2006-01-02"
-
-	// find the first day of the lunar year by stepping back from a known point
-	// First day of 2557
-	smallEpoch, _ := time.Parse(dF, "2013-11-18")
-	// forward stepping by default
-	direction := 1
-	if smallEpoch.Year() >= su.Year {
-		// backward stepping otherwise
-		direction = -1
-	}
-
-	newYearsDay := smallEpoch
-
-	for year := smallEpoch.Year() + 1; year != su.Year; year += direction {
-		//fmt.Printf("%d\n", year)
-		var stepSu SuriyaYear
-		stepSu.Init(year)
-		//fmt.Printf("Add %d\n", stepSu.YearLength()*direction)
-		newYearsDay = newYearsDay.Add(time.Duration(stepSu.YearLength()*direction) * 24 * time.Hour)
-	}
-
-	// In a common year, Asalha Puja is the last day of the 8th month.
-	days := 4 * (29 + 30)
-	if su.Is_Adhikamasa() {
-		// In an adhikamāsa year, the extra month (2nd Asalha) is a 30 day month.
-		days += 30
-	} else if su.Is_Adhikavara() {
-		// In an adhikavāra year, the 8th month (Asalha) is 30 days instead of 29 days.
-		days += 1
-	}
-
-	/*
-		// On January 1, the first month (30 days) passed, and the age of the moon is the Tithi
-		// for some reason it needs a +2 offset
-		days = days - 30 - su.Tithi + 2
-	*/
-
-	//date, _ := time.Parse(dF, fmt.Sprintf("%d-01-01", su.Year))
-	//date = date.AddDate(0, 0, days)
-
-	// some offset
-	days -= 1
-
-	date := newYearsDay.Add(time.Duration(days) * 24 * time.Hour)
+	prev_kattika := CalculatePreviousKattika(su.Year)
+	date := prev_kattika.Add(time.Duration(days) * time.Hour * 24)
 	return date
 }
 
@@ -459,11 +420,14 @@ func NextUposatha(last_uposatha UposathaMoon) UposathaMoon {
 }
 
 // Calculate the kattika full moon before this year
-func CalculatePreviousKattika(solar_year int) UposathaMoon {
+func CalculatePreviousKattika(solar_year int) time.Time {
 
-	// Use a known Kattika date
-	kattika_date, _ := time.Parse("2006-01-02", "2015-11-25")
+	dFmt := "2006-01-02"
 
+	// Step from a known Kattika date as epoch date
+	kattika_date, _ := time.Parse(dFmt, "2015-11-25")
+
+	// Determine the direction of stepping
 	var direction int
 	if kattika_date.Year() < solar_year-1 {
 		direction = 1
@@ -471,7 +435,7 @@ func CalculatePreviousKattika(solar_year int) UposathaMoon {
 		direction = -1
 	}
 
-	// Step until the Kattika in the prev. solar year
+	// Step in direction until the Kattika in the prev. solar year
 	for y := kattika_date.Year(); y != solar_year-1; y += direction {
 		var su_year SuriyaYear
 		var n int
@@ -489,16 +453,5 @@ func CalculatePreviousKattika(solar_year int) UposathaMoon {
 		kattika_date = kattika_date.Add(time.Duration(n*direction) * time.Hour * 24)
 	}
 
-	return UposathaMoon{
-		Date:        kattika_date,
-		Calendar:    0, // mahanikaya
-		Phase:       "full",
-		S_Number:    8,
-		S_Total:     8,
-		U_Days:      15,
-		M_Days:      29,
-		LunarMonth:  12,
-		LunarSeason: 3,
-		LunarYear:   kattika_date.Year() + 543,
-	}
+	return kattika_date
 }

@@ -28,6 +28,7 @@ type UposathaMoon struct {
 	Calendar      int    // mahanikaya, dhammayut, srilanka, myanmar
 	Status        int    // draft, predicted, confirmed
 	Phase         string // only new or full. waxing and waning will be derived.
+	Event         string // magha, vesakha, asalha, pavarana
 	S_Number      int    // 1 of 8 in Hemanta
 	S_Total       int    // total number of uposathas in the season, 8 in Hemanta
 	U_Days        int    // uposatha days, 14 or 15
@@ -137,7 +138,7 @@ func (su *SuriyaYear) calculateSuriyaValues() {
 
 	/*
 		// TODO
-		// interval from 1 Caitra (Visakha New Moon - 1) to Ashalha Full Moon, minus NY day
+		// interval from 1 Caitra (Vesakha New Moon - 1) to Ashalha Full Moon, minus NY day
 		deltaVA := 103 - su.Tithi
 		// deltaVA = 80
 
@@ -258,7 +259,7 @@ var monthToInt = map[string]int{
 	"magha":      3,
 	"phagguna":   4,
 	"citta":      5,
-	"visakha":    6,
+	"vesakha":    6,
 	"jettha":     7,
 	"asalha":     8,
 	"savana":     9,
@@ -349,6 +350,39 @@ func NextUposatha(last_uposatha UposathaMoon) UposathaMoon {
 		nu.LunarSeason = lu.LunarSeason
 		nu.LunarYear = lu.LunarYear
 		nu.HasAdhikavara = false // Adhikavara is only added to New Moons
+
+		// Event: magha, vesakha, asalha, pavarana
+
+		// In Adhikamāsa Years the major moons shift with one month
+		if is_adhikamasa_year {
+			switch nu.LunarMonth {
+			case 4:
+				nu.Event = "magha"
+			case 7:
+				nu.Event = "vesakha"
+			case 13:
+				nu.Event = "asalha"
+			case 11:
+				nu.Event = "pavarana"
+			default:
+				nu.Event = ""
+			}
+		} else {
+			// Common Year and Adhikavara Year
+			switch nu.LunarMonth {
+			case 3:
+				nu.Event = "magha"
+			case 6:
+				nu.Event = "vesakha"
+			case 8:
+				nu.Event = "asalha"
+			case 11:
+				nu.Event = "pavarana"
+			default:
+				nu.Event = ""
+			}
+		}
+
 	} else {
 
 		// The New Moon uposatha begins a new month.
@@ -454,4 +488,76 @@ func CalculatePreviousKattika(solar_year int) time.Time {
 	}
 
 	return kattika_date
+}
+
+type SimpleCalDay struct {
+	Date  time.Time
+	Phase string // full, waning, new, waxing
+	Event string // magha, vesakha, asalha, pavarana
+}
+
+func GenerateSolarYear(solar_year int) []SimpleCalDay {
+
+	var days []SimpleCalDay
+
+	var su_year SuriyaYear
+	su_year.Init(solar_year)
+
+	date := CalculatePreviousKattika(solar_year)
+
+	last_uposatha := UposathaMoon{
+		Date:        date,
+		Calendar:    0, // mahanikaya
+		Phase:       "full",
+		S_Number:    8,
+		S_Total:     8,
+		U_Days:      15,
+		M_Days:      29,
+		LunarMonth:  12,
+		LunarSeason: 3,
+		LunarYear:   date.Year() + 543,
+	}
+
+	for last_uposatha.Date.Year() <= solar_year {
+		var uposatha UposathaMoon
+		var day SimpleCalDay
+		uposatha = NextUposatha(last_uposatha)
+		last_uposatha = uposatha
+
+		if uposatha.Date.Year() < solar_year || uposatha.Date.Year() > solar_year {
+			continue
+		}
+
+		// Uposatha
+
+		day.Date = uposatha.Date
+		day.Phase = uposatha.Phase
+		day.Event = uposatha.Event
+		days = append(days, day)
+
+		// Half Moon
+
+		var phase string
+		switch uposatha.Phase {
+		case "new":
+			phase = "waxing"
+		case "full":
+			phase = "waning"
+		}
+
+		day = SimpleCalDay{
+			Date:  uposatha.Date.AddDate(0, 0, 8),
+			Phase: phase,
+			Event: "",
+		}
+
+		if day.Date.Year() < solar_year || day.Date.Year() > solar_year {
+			continue
+		}
+
+		days = append(days, day)
+
+	}
+
+	return days
 }

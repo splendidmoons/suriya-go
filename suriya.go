@@ -524,16 +524,15 @@ func GenerateSolarYear(solar_year int) []SimpleCalDay {
 		uposatha = NextUposatha(last_uposatha)
 		last_uposatha = uposatha
 
-		if uposatha.Date.Year() < solar_year || uposatha.Date.Year() > solar_year {
-			continue
-		}
-
 		// Uposatha
 
 		day.Date = uposatha.Date
 		day.Phase = uposatha.Phase
 		day.Event = uposatha.Event
-		days = append(days, day)
+
+		if uposatha.Date.Year() == solar_year {
+			days = append(days, day)
+		}
 
 		// Half Moon
 
@@ -551,11 +550,9 @@ func GenerateSolarYear(solar_year int) []SimpleCalDay {
 			Event: "",
 		}
 
-		if day.Date.Year() < solar_year || day.Date.Year() > solar_year {
-			continue
+		if day.Date.Year() == solar_year {
+			days = append(days, day)
 		}
-
-		days = append(days, day)
 
 	}
 

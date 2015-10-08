@@ -7,6 +7,11 @@ import (
 	"time"
 )
 
+const (
+	eraDays  = 292207
+	eraYears = 800
+)
+
 type SuriyaYear struct {
 	Year        int // Common Era
 	BE_year     int // Buddhist Era, CE + 543
@@ -17,10 +22,16 @@ type SuriyaYear struct {
 	Avoman      int // For the Moon's mean motion
 	Masaken     int // Elapsed months of the era
 	Tithi       int // Age of the moon at the start of the year, also called Thaloengsok or New Year's Day
-	//MeanSun     float64
-	//TrueSun     float64
-	//MeanMoon    float64
-	//TrueMoon    float64
+}
+
+type SuriyaDay struct {
+	Year     int     // Common Era
+	YearDay  int     // nth day in the Lunar Year
+	MeanSun  float64 // position in degrees
+	TrueSun  float64
+	MeanMoon float64
+	TrueMoon float64
+	Raek     float64
 }
 
 type UposathaMoon struct {
@@ -106,8 +117,6 @@ Tithi: %d
 
 func (su *SuriyaYear) calculateSuriyaValues() {
 	// Eade, p.10. South Asian traditional number of days in 800 years
-	const eraDays = 292207
-	const eraYears = 800
 	var a int // just a helper variable
 
 	// Take CE 1963, CS 1325 (as in the paper: "Rules for Interpolation...")
@@ -133,22 +142,29 @@ func (su *SuriyaYear) calculateSuriyaValues() {
 
 	su.Tithi = (a + su.Horakhun) % 30
 	// Tithi = 23
+}
 
-	// === B. Find the position of the Mean and true Sun on Asalha 15 ===
+// (x; y : z) in Eade's notation means 30*60*x + 60*y + z in arcmins, so x and y are deg originally
+func DegreeToEade(degree float64) (x, y, z int) {
+	// how many times 30 degrees
+	x = int(math.Floor(degree / 30))
 
-	/*
-		// TODO
-		// interval from 1 Caitra (Vesakha New Moon - 1) to Ashalha Full Moon, minus NY day
-		deltaVA := 103 - su.Tithi
-		// deltaVA = 80
+	// the remainder degrees
+	y = int(math.Floor(degree)) % 30
 
-		a = (deltaVA * eraYears) + su.Kammacubala
-		su.MeanSun = float64(((a / eraDays) * 360)) - math.Pow(3, 13)
-		fmt.Printf("MeanSun: %v\n", su.MeanSun)
-	*/
+	// plus the arcmins
+	z = int(math.Floor((degree - math.Floor(degree)) * 60))
 
-	// === C. Find the Mean and True Moon on Asalha 15 ===
+	return x, y, z
+}
 
+func DegreeToEadeString(degree float64) string {
+	u, v, t := DegreeToEade(degree)
+	return fmt.Sprintf("%d; %d : %d", u, v, t)
+}
+
+func EadeToDegree(x, y, z int) float64 {
+	return float64(30*x+y) + float64(z)/60
 }
 
 func (su SuriyaYear) Is_Suriya_Leap() bool {
@@ -250,6 +266,196 @@ func (su SuriyaYear) AsalhaPuja() time.Time {
 	prev_kattika := CalculatePreviousKattika(su.Year)
 	date := prev_kattika.Add(time.Duration(days) * time.Hour * 24)
 	return date
+}
+
+func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
+	suYear := SuriyaYear{}
+	suYear.Init(ce_year)
+
+	suDay.Year = ce_year
+	suDay.YearDay = lunar_year_day
+
+	var a, b, c, d float64
+
+	// === B. Find the position of the Mean and true Sun on Asalha 15 ===
+
+	// Sample values in the comments are for lunar_year_day = 103, Asalha 15
+
+	// Length of the months, Thai months ending on New Moon:
+	// Citta   Full + New = 15+14
+	// Vesakha Full + New = 15+15
+	// Jettha  Full + New = 15+14
+	// Asalha  Full       = 15
+	// ---------------------------
+	//                    = 103
+
+	// interval from 1 Caitra (aka Citta) to Asalha Full Moon, minus New Year day
+	deltaVA := suDay.YearDay - suYear.Tithi
+	// deltaVA = 80
+
+	a = float64((deltaVA * eraYears) + suYear.Kammacubala)
+	// a = 64552
+
+	b = (a / eraDays) * 360
+	// b = 79.5282796100025
+
+	// the integer part will be the degrees
+	deg := int(math.Floor(b))
+	// deg = 79
+
+	// convert the float part to arcmins, take its integer part, subtract 3 arcmins
+	// TODO: deal with negative min result
+	min := math.Floor((b-math.Floor(b))*60) - 3
+	// min = math.Floor(31.69677) - 3
+	// min = 28
+
+	// (x; y : z) in Eade's notation means 30*60*x + 60*y + z in arcmins, so x and y are deg originally
+
+	// how many times 30 degrees
+	x := math.Floor(float64(deg) / 30)
+
+	// the remainder degrees
+	y := deg % 30
+
+	// plus the arcmins
+	z := min
+
+	// Store MeanSun in float64 degrees
+	suDay.MeanSun = (30*x + float64(y)) + z/60
+	// MeanSun = 79.4666
+	// DegreeToEade(MeanSun) = 2; 19 : 28
+
+	//fmt.Printf("Mean Sun: %s\n", DegreeToEadeString(suDay.MeanSun))
+
+	b = math.Abs(suDay.MeanSun - EadeToDegree(2, 20, 0))
+
+	// math.Sin takes radians
+	radconv := (2 * math.Pi) / 360
+	c = math.Floor(134 * math.Sin(b*radconv))
+	// c = math.Floor(1.2473)
+	// c = 1
+
+	suDay.TrueSun = suDay.MeanSun + c/60
+	// DegreeToEade(TrueSun) = 2; 19 : 29
+
+	//fmt.Printf("True Sun: %s\n", DegreeToEadeString(suDay.TrueSun))
+
+	// === C. Find the Mean and True Moon on Asalha 15 ===
+
+	// avoman of the date
+	c = float64((suYear.Avoman + deltaVA*11) % 692)
+	// c = 249
+
+	// step 12.
+	b = c + math.Floor(c/25)
+	// b = 258
+	// convert b to degree from minutes
+	b = b / 60
+	// b = 4.3
+	// 0; 4 : 17
+
+	// step 13.
+	suDay.MeanMoon = suDay.TrueSun + b + (14 * 12) - EadeToDegree(0, 0, 40)
+	// Mean Moon: 8; 11 : 7
+	// Mean Moon: 251.116666
+
+	//fmt.Printf("Mean Moon: %s\n", DegreeToEadeString(suDay.MeanMoon))
+	//fmt.Printf("Mean Moon: %v\n", suDay.MeanMoon)
+
+	// ======================================================================
+	// TODO: how do we do these?
+
+	// === step 14. =========================================================
+
+	var meanUccabala float64
+
+	// TODO How to interpret this? Eade has: "(1780 + 80) * 3 on base 808, and add 2"
+
+	c = float64((suYear.Uccabala+deltaVA)*3 + 2)
+	// c = 5582
+	// ???
+
+	// Eade has 6; 27 : 12, but that doesn't work.
+	//meanUccabala = EadeToDegree(6, 27, 12)
+	// meanUccabala = 207.2
+
+	// TODO: this is a hacked conversion
+
+	// This value works to get a working b value
+	// Use a conversion value to get meanUccabala = 211.63
+	// (1780 + 80) / 211.63 = 8.788924
+	meanUccabala = float64(suYear.Uccabala+deltaVA) / 8.788924
+
+	// meanUccabala = 211.63
+	// 7; 1 : 37
+
+	//fmt.Printf("Mean Uccabala: %v\n", meanUccabala)
+	//fmt.Printf("Mean Uccabala: %s\n", DegreeToEadeString(meanUccabala))
+
+	// === step 15. =========================================================
+
+	b = suDay.MeanMoon - meanUccabala
+	//fmt.Printf("b: %v\n", b)
+	//fmt.Printf("b: %s\n", DegreeToEadeString(b))
+
+	// With meanUccabala 6; 27 : 12
+	// b = 43.916666
+	// b = 1; 13 : 55
+
+	// b works with a value around 0.6581*60 = 39.486
+	// which is b = 1; 9 : 29
+
+	// b = 39.486
+
+	// NOTE: Eade has 1; 3 : 55, but that doesn't work. Perhaps a typo in the
+	// paper. It gives True Moon 8; 8 : 11, and Raek 0; 19 : 36.
+	//b = EadeToDegree(1, 3, 55)
+	// b = 33.916666
+	// b = 1; 3 : 54
+	// use b = 33.92 to get 1; 3 : 55
+
+	//b = 33.92
+	//fmt.Printf("b: %v\n", b)
+	//fmt.Printf("b: %s\n", DegreeToEadeString(b))
+
+	// minute to degree seems necessary for step 16.
+	b = b / 60
+	//fmt.Printf("b deg: %v\n", b)
+	//fmt.Printf("b deg: %s\n", DegreeToEadeString(b))
+
+	// find the b that works for step 16. to get d = 3.4
+	//b = math.Asin(3.4/296) / radconv
+
+	// b = 0.6581416701172066007
+	// b = 0; 0 : 39
+	//fmt.Printf("b: %v\n", b)
+	//fmt.Printf("b: %v\n", DegreeToEadeString(b))
+
+	// ======================================================================
+
+	// step 16.
+	d = 296 * math.Sin(b*radconv)
+	// d = 3.4
+	// d = EadeToDegree(0, 3, 24)
+
+	//fmt.Printf("d: %s\n", DegreeToEadeString(d))
+	//fmt.Printf("d: %v\n", d)
+
+	// step 17.
+	suDay.TrueMoon = suDay.MeanMoon - d
+	// True Moon = 247.716666
+	// True Moon = 8; 7 : 43
+
+	//fmt.Printf("True Moon: %v\n", suDay.TrueMoon)
+	//fmt.Printf("True Moon: %s\n", DegreeToEadeString(suDay.TrueMoon))
+
+	b = EadeToDegree(0, 13, 20)
+	// Raek aka Mula
+	suDay.Raek = suDay.TrueMoon/b + 1
+	// Raek = 0; 19 : 34
+
+	//fmt.Printf("Raek: %s\n", DegreeToEadeString(suDay.Raek))
+
 }
 
 var monthToInt = map[string]int{

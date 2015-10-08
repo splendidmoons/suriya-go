@@ -299,29 +299,13 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 	b = (a / eraDays) * 360
 	// b = 79.5282796100025
 
-	// the integer part will be the degrees
-	deg := int(math.Floor(b))
-	// deg = 79
-
-	// convert the float part to arcmins, take its integer part, subtract 3 arcmins
-	// TODO: deal with negative min result
-	min := math.Floor((b-math.Floor(b))*60) - 3
-	// min = math.Floor(31.69677) - 3
-	// min = 28
-
 	// (x; y : z) in Eade's notation means 30*60*x + 60*y + z in arcmins, so x and y are deg originally
+	x, y, z := DegreeToEade(b)
+	z -= 3
 
-	// how many times 30 degrees
-	x := math.Floor(float64(deg) / 30)
+	// TODO: deal with negative min result
 
-	// the remainder degrees
-	y := deg % 30
-
-	// plus the arcmins
-	z := min
-
-	// Store MeanSun in float64 degrees
-	suDay.MeanSun = (30*x + float64(y)) + z/60
+	suDay.MeanSun = EadeToDegree(x, y, z)
 	// MeanSun = 79.4666
 	// DegreeToEade(MeanSun) = 2; 19 : 28
 

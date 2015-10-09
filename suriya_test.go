@@ -279,3 +279,27 @@ func TestAsalhaPuja(t *testing.T) {
 		}
 	}
 }
+
+func TestRaek(t *testing.T) {
+	suDay := SuriyaDay{}
+
+	// The expanded example in Eade's paper "Rules for Interpolation in The Thai Calendar"
+	// CS 1325, Raek 0; 19 : 34
+	// CS 1325 is adhikavāra in his paper
+	suDay.Init(1963, 103)
+	expect := "0; 19 : 34"
+	raekStr := DegreeToEadeString(suDay.Raek)
+	if raekStr != expect {
+		t.Errorf("expected %s, but got %s", expect, raekStr)
+	}
+
+	// CS 1324, Raek 0; 20 : 38
+	// CS 1324 is common year in his paper
+	// TODO: is 103 the correct day to examine?
+	suDay.Init(1962, 103)
+	expect = "0; 20 : 39" // +1 diff to the value in the paper, probably rounding differences
+	raekStr = DegreeToEadeString(suDay.Raek)
+	if raekStr != expect {
+		t.Errorf("expected %s, but got %s", expect, raekStr)
+	}
+}

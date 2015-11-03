@@ -7,10 +7,23 @@ import (
 	"time"
 )
 
+// Eade, p.10. South Asian traditional number of days in 800 years
+
 const (
-	eraDays  = 292207
-	eraYears = 800
+	EraDays  = 292207
+	EraYears = 800
 )
+
+// Whether to apply the (adhikavāra) exceptions where the official calendar
+// differed from the formulas. Default is false, to generate calendar data that
+// is "pure" in its consistency. Set to true if you want to match official past
+// calendars which differed from the regular pattern.
+var UseExceptions bool = false
+
+var AdhikavaraExceptions = map[int]bool{
+	1994: false,
+	1997: true,
+}
 
 type SuriyaYear struct {
 	Year        int // Common Era
@@ -69,13 +82,10 @@ func (su SuriyaYear) Would_Be_Adhikamasa() bool {
 }
 
 func (su SuriyaYear) Is_Adhikavara() bool {
-	exceptions := map[int]bool{
-		1994: false,
-		1997: true,
-	}
-
-	if _, ok := exceptions[su.Year]; ok {
-		return exceptions[su.Year]
+	if UseExceptions {
+		if _, ok := AdhikavaraExceptions[su.Year]; ok {
+			return AdhikavaraExceptions[su.Year]
+		}
 	}
 
 	if su.Is_Adhikamasa() {
@@ -116,31 +126,49 @@ Tithi: %d
 }
 
 func (su *SuriyaYear) calculateSuriyaValues() {
-	// Eade, p.10. South Asian traditional number of days in 800 years
-	var a int // just a helper variable
+	var a, b int // just helper variables
 
 	// Take CE 1963, CS 1325 (as in the paper: "Rules for Interpolation...")
 
 	// === A. Find the relevant values for the astronomical New Year ===
 
-	a = (su.CS_year * eraDays) + 373
-	su.Horakhun = int(math.Floor(float64(a/eraYears + 1)))
+	// 373 is the Horakhun at the beginning of the CS Era, Ephemeris p.15, H2 element
+	// +1 is another constant correction, H3
+	a = (su.CS_year * EraDays) + 373
+	su.Horakhun = int(math.Floor(float64(a/EraYears + 1)))
 	// Horakhun = 483969
 
-	su.Kammacubala = eraYears - a%eraYears
+	su.Kammacubala = EraYears - a%EraYears
 	// Kammacubala = 552
 
+	// 2611 is another adjustment constant
+	// 3232 is a "base" for 360 degrees, Calendrical p.48
 	su.Uccabala = (su.Horakhun + 2611) % 3232
 	// Uccabala = 1780
 
-	su.Avoman = ((su.Horakhun * 11) + 650) % 692
+	/*
+				"For every 692 solar days that elapse there are also 703 tithi.
+				Since 703 / 692 can be expressed as 692 + 11 / 692,
+				the ratio is simplified to these terms..." (Calendrical, p.48)
+
+		    11 is the daily increase (excess tithi over days)
+	*/
+
+	/*
+		(Calendrical, p.49)
+	*/
+
+	// 650 is another adjustment constant
+	a = (su.Horakhun * 11) + 650
+	su.Avoman = a % 692
 	// Avoman = 61
 
-	a = int(math.Floor(float64(((su.Horakhun * 11) + 650) / 692)))
-	su.Masaken = (a + su.Horakhun) / 30
+	// TODO: am I doing the Masaken wrong?
+	b = int(math.Floor(float64(a / 692)))
+	su.Masaken = int(math.Floor(float64((b + su.Horakhun) / 30)))
 	// Masaken = 16388
 
-	su.Tithi = (a + su.Horakhun) % 30
+	su.Tithi = (b + su.Horakhun) % 30
 	// Tithi = 23
 }
 
@@ -155,6 +183,7 @@ func DegreeToEade(degree float64) (x, y, z int) {
 	// plus the arcmins
 	z = int(math.Floor((degree - math.Floor(degree)) * 60))
 
+	// TODO This is rasi, angsa, lipda
 	return x, y, z
 }
 
@@ -294,13 +323,13 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 	//                    = 103
 
 	// interval from 1 Caitra (aka Citta) to Asalha Full Moon, minus New Year day
-	deltaVA := suDay.YearDay - suYear.Tithi
-	// deltaVA = 80
+	deltaCA := suDay.YearDay - suYear.Tithi
+	// deltaCA = 80
 
-	a = float64((deltaVA * eraYears) + suYear.Kammacubala)
+	a = float64((deltaCA * EraYears) + suYear.Kammacubala)
 	// a = 64552
 
-	b = (a / eraDays) * 360
+	b = (a / EraDays) * 360
 	// b = 79.5282796100025
 
 	// (x; y : z) in Eade's notation means 30*60*x + 60*y + z in arcmins, so x and y are deg originally
@@ -327,7 +356,7 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 	// === C. Find the Mean and True Moon on Asalha 15 ===
 
 	// avoman of the date
-	c = float64((suYear.Avoman + deltaVA*11) % 692)
+	c = float64((suYear.Avoman + deltaCA*11) % 692)
 	// c = 249
 
 	// step 12.
@@ -341,6 +370,8 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 
 	// step 13.
 
+	// TODO: where is this 14 coming from? Sth to do with Asalha 15?
+	// yep, seems to be the month day number, the midnight of 14th = 15th
 	suDay.MeanMoon = suDay.TrueSun + b + (14 * 12) - EadeToDegree(0, 0, 40)
 	// Mean Moon: 8; 11 : 7
 	// Mean Moon: 251.116666
@@ -350,7 +381,7 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 	var meanUccabala float64
 
 	// all in one, see below for step-by-step
-	meanUccabala = ((((float64(suYear.Uccabala+deltaVA) * 3 * 30) / 808) * 60) + 2) / 60
+	meanUccabala = ((((float64(suYear.Uccabala+deltaCA) * 3 * 30) / 808) * 60) + 2) / 60
 	// Mean Uccabala = 6; 27 : 12
 	// Mean Uccabala = 207.2115
 
@@ -399,6 +430,7 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 	// True Moon = 8; 7 : 43
 	// True Moon = 247.716666
 
+	// (0; 13:20) = 13.33 degree is one raek, i.e. 360 deg / 27 mansions
 	b = EadeToDegree(0, 13, 20)
 	// Raek aka Mula
 	suDay.Raek = suDay.TrueMoon/b + 1

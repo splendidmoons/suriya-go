@@ -187,6 +187,8 @@ func main() {
 		return
 	}
 
+	suriya.UseExceptions = false
+
 	n, err := io.WriteString(file, yearsCsv(1970, 2041))
 	if err != nil {
 		fmt.Println(n, err)

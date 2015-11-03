@@ -91,13 +91,12 @@ func TestAdhikamasa(t *testing.T) {
 }
 
 func TestAdhikavara(t *testing.T) {
-	// Adhikavāra in FS-Cal: 2005, 2009, 2016.
 	adhikavaraYears := map[int]bool{
 		1993: false, //
-		1994: false, // Exception!
+		1994: true,  // false in past calendar, exception
 		1995: false, //
 		1996: false, //
-		1997: true,  // Exception!
+		1997: false, // true in past calendar, exception
 		1998: false, //
 		1999: false, //
 		2000: true,  // 6
@@ -217,26 +216,26 @@ func TestAsalhaPuja(t *testing.T) {
 		1975: "1975-07-23", // myhora.com
 		1976: "1976-07-11", // myhora.com
 		1977: "1977-07-30", // myhora.com
-		//1978: "1978-07-19", // myhora.com F
+		1978: "1978-07-20", // exception in calendars: myhora.com, 1978-07-19 (missing adhikavāra)
 		1979: "1979-07-09", // myhora.com
 		1980: "1980-07-27", // myhora.com
 		1981: "1981-07-16", // myhora.com
 		1982: "1982-07-05", // myhora.com
 		1983: "1983-07-24", // myhora.com
-		//1984: "1984-07-12", // myhora.com F
-		//1985: "1985-07-31", // myhora.com F
-		//1986: "1986-07-20", // myhora.com F
+		1984: "1984-07-13", // exception in calendars: myhora.com, 1984-07-12 (missing adhikavāra)
+		1985: "1985-08-01", // exception in calendars: myhora.com
+		1986: "1986-07-21", // exception in calendars: myhora.com
 		1987: "1987-07-10", // thaiorc.com
 		1988: "1988-07-28", // thaiorc.com
-		//1989: "1989-07-17", // thaiorc.com F
+		1989: "1989-07-18", // exception in calendars: thaiorc.com, 1989-07-17 (missing adhikavāra)
 		1990: "1990-07-07", // thaiorc.com
 		1991: "1991-07-26", // thaiorc.com
 		1992: "1992-07-14", // thaiorc.com NOTE: bot.or.th has 07-15
 		1993: "1993-08-02", // thaiorc.com
-		1994: "1994-07-22", // thaiorc.com, myhora.com NOTE: Passing w/ exception
-		1995: "1995-07-11", // thaiorc.com, myhora.com
-		1996: "1996-07-29", // thaiorc.com, myhora.com
-		1997: "1997-07-19", // thaiorc.com, myhora.com NOTE: Passing w/ exception
+		1994: "1994-07-23", // exception in calendars: thaiorc.com, myhora.com, 1994-07-22 (missing adhikavāra)
+		1995: "1995-07-12", // exception in calendars: thaiorc.com, myhora.com
+		1996: "1996-07-30", // exception in calendars: thaiorc.com, myhora.com
+		1997: "1997-07-19", // thaiorc.com, myhora.com
 		1998: "1998-07-08", // thaiorc.com
 		1999: "1999-07-27", // thaiorc.com
 		2000: "2000-07-16", // thaiorc.com
@@ -260,6 +259,7 @@ func TestAsalhaPuja(t *testing.T) {
 		2017: "2017-07-08", // myhora.com
 		2018: "2018-07-27", // myhora.com
 		2019: "2019-07-16", // myhora.com
+		// 2020 will be adhikavāra
 		//2020: "2020-07-04", // myhora.com F
 		//2021: "2021-07-23", // myhora.com F
 		//2022: "2022-07-12", // myhora.com F
@@ -295,9 +295,8 @@ func TestRaek(t *testing.T) {
 
 	// CS 1324, Raek 0; 20 : 38
 	// CS 1324 is common year in his paper
-	// TODO: is 103 the correct day to examine?
 	suDay.Init(1962, 103)
-	expect = "0; 20 : 39" // +1 diff to the value in the paper, probably rounding differences
+	expect = "0; 20 : 39" // +1 arcmin diff to the value in the paper, probably rounding differences
 	raekStr = DegreeToEadeString(suDay.Raek)
 	if raekStr != expect {
 		t.Errorf("expected %s, but got %s", expect, raekStr)

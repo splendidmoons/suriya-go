@@ -136,8 +136,8 @@ func TestCalculateSuriyaValues(t *testing.T) {
 	// Take CE 1963, CS 1325 (as in the paper: "Rules for Interpolation...", JC Eade)
 	su = SuriyaYear{
 		Year:        1963,
-		BE_year:     2506,
-		CS_year:     1325,
+		BE_Year:     2506,
+		CS_Year:     1325,
 		Horakhun:    483969,
 		Kammacubala: 552,
 		Uccabala:    1780,
@@ -151,8 +151,8 @@ func TestCalculateSuriyaValues(t *testing.T) {
 	// https://books.google.com/books?id=g_JEgc5C-OYC
 	su = SuriyaYear{
 		Year:        1496,
-		BE_year:     2039,
-		CS_year:     858,
+		BE_Year:     2039,
+		CS_Year:     858,
 		Horakhun:    313393,
 		Kammacubala: 421,
 		Uccabala:    2500,
@@ -177,8 +177,8 @@ Tithi: %d
 		var su SuriyaYear
 		su.Init(expectSu.Year)
 
-		suStr := fmt.Sprintf(fmtStr, su.Year, su.BE_year, su.CS_year, su.Horakhun, su.Kammacubala, su.Uccabala, su.Avoman, su.Masaken, su.Tithi)
-		expectSuStr := fmt.Sprintf(fmtStr, expectSu.Year, expectSu.BE_year, expectSu.CS_year, expectSu.Horakhun, expectSu.Kammacubala, expectSu.Uccabala, expectSu.Avoman, expectSu.Masaken, expectSu.Tithi)
+		suStr := fmt.Sprintf(fmtStr, su.Year, su.BE_Year, su.CS_Year, su.Horakhun, su.Kammacubala, su.Uccabala, su.Avoman, su.Masaken, su.Tithi)
+		expectSuStr := fmt.Sprintf(fmtStr, expectSu.Year, expectSu.BE_Year, expectSu.CS_Year, expectSu.Horakhun, expectSu.Kammacubala, expectSu.Uccabala, expectSu.Avoman, expectSu.Masaken, expectSu.Tithi)
 
 		if suStr != expectSuStr {
 			t.Errorf("expected: %s\n but got: %s\n", expectSuStr, suStr)

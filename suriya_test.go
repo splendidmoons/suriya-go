@@ -285,7 +285,7 @@ func TestRaek(t *testing.T) {
 
 	// The expanded example in Eade's paper "Rules for Interpolation in The Thai Calendar"
 	// CS 1325, Raek 0; 19 : 34
-	// CS 1325 is adhikavāra in his paper
+	// CS 1325 is adhikavāra
 	suDay.Init(1963, 103)
 	expect := "0; 19 : 34"
 	raekStr := DegreeToEadeString(suDay.Raek)
@@ -294,10 +294,20 @@ func TestRaek(t *testing.T) {
 	}
 
 	// CS 1324, Raek 0; 20 : 38
-	// CS 1324 is common year in his paper
+	// CS 1324 is common year
 	suDay.Init(1962, 103)
 	expect = "0; 20 : 39" // +1 arcmin diff to the value in the paper, probably rounding differences
 	raekStr = DegreeToEadeString(suDay.Raek)
+	if raekStr != expect {
+		t.Errorf("expected %s, but got %s", expect, raekStr)
+	}
+
+	// 2015-07-15
+	// 15 days before Asalha
+	// 2015 is adhikamāsa
+	suDay.Init(2015, 103+30-15)
+	expect = "2; 26 : 35" // myhora.com: Moon is (2; 26 : 12)
+	raekStr = DegreeToEadeString(suDay.TrueMoon)
 	if raekStr != expect {
 		t.Errorf("expected %s, but got %s", expect, raekStr)
 	}

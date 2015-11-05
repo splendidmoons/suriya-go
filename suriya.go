@@ -151,10 +151,10 @@ func (su *SuriyaYear) calculateSuriyaValues() {
 
 	// +1 is another constant correction, H3
 	a = (su.CS_Year * EraDays) + EraHorakhun
-	su.Horakhun = int(math.Floor(float64(a/EraYears + 1)))
+	su.Horakhun = int(math.Floor(float64(a/KammacubalaDaily + 1)))
 	// Horakhun = 483969
 
-	su.Kammacubala = EraYears - a%EraYears
+	su.Kammacubala = KammacubalaDaily - a%KammacubalaDaily
 	// Kammacubala = 552
 
 	// 3232 is a "base" for 360 degrees, Calendrical p.48
@@ -194,7 +194,9 @@ func DegreeToEadeString(degree float64) string {
 }
 
 func EadeToDegree(x, y, z int) float64 {
-	return float64(30*x+y) + float64(z)/60
+	// Multiply up and divide down by 10000 for better arcmin (z) accuracy
+	// Floor to keep only 4 decimal places
+	return math.Floor(float64(30*x+y)*10000+float64(z*10000)/60) / 10000
 }
 
 // Keep it within 360 deg
@@ -319,35 +321,31 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 	suDay.CS_Year = ce_year - 638
 	suDay.Day = lunar_year_day
 
-	var ai, bi int // int helpers
+	// This is elapsedDays = suDay.Horakhun - suYear.Horakhun, but the meaning is
+	// perhaps clearer as below.
+	elapsedDays := suDay.Day - suYear.Tithi
 
 	// Horakhun of the day
-	// - suYear.Tithi works for the Sun and Moon degree calcs, but gives different values to the 12x AD example
-	suDay.Horakhun = suYear.Horakhun + suDay.Day - suYear.Tithi
-	// Horakhun = 240356
+	suDay.Horakhun = suYear.Horakhun + elapsedDays
 
 	// Kammacubala of the day
-	suDay.Kammacubala = EraYears - ai%EraYears
-	suDay.Kammacubala += suDay.Day * KammacubalaDaily
-	// Kammacubala = 12221
+	suDay.Kammacubala = KammacubalaDaily - (suDay.CS_Year*EraDays+EraHorakhun)%EraYears + elapsedDays*KammacubalaDaily
 
 	// Uccabala of the day
 	suDay.Uccabala = (suDay.Horakhun + EraUccabala) % 3232
-	// Uccabala = 567
+
+	var ai, bi int // int helpers
 
 	// Avoman of the day
 	ai = (suDay.Horakhun * CycleDaily) + EraAvoman
 	suDay.Avoman = ai % CycleSolar
-	// Avoman = 434
 
 	// Masaken of the day
 	bi = int(math.Floor(float64(ai)/CycleSolar)) + EraMasaken + suDay.Horakhun
 	suDay.Masaken = int(math.Floor(float64(bi / MonthLength)))
-	// Masaken = 8139
 
 	// Tithi of the day
 	suDay.Tithi = bi % MonthLength
-	// Tithi = 7
 
 	var a, b, c, d float64
 
@@ -365,12 +363,7 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 
 	// interval from 1 Caitra (aka Citta) to Asalha Full Moon, minus New Year day
 
-	// This is delta = suDay.Horakhun - suYear.Horakhun, but the meaning is
-	// perhaps clearer as below.
-	delta := suDay.Day - suYear.Tithi
-	// delta = 80
-
-	a = float64((delta * EraYears) + suYear.Kammacubala)
+	a = float64((elapsedDays * EraYears) + suYear.Kammacubala)
 	// a = 64552
 
 	b = (a / EraDays) * 360
@@ -394,7 +387,7 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 	// c = math.Floor(1.2473)
 	// c = 1
 
-	suDay.TrueSun = suDay.MeanSun + c/60
+	suDay.TrueSun = math.Floor(suDay.MeanSun*10000+(c*10000)/60) / 10000
 	// TrueSun = 2; 19 : 29
 
 	// === C. Find the Mean and True Moon on Asalha 15 ===
@@ -423,7 +416,7 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 	var meanUccabala float64
 
 	// all in one, see below for step-by-step
-	meanUccabala = ((((float64(suYear.Uccabala+delta) * 3 * 30) / 808) * 60) + 2) / 60
+	meanUccabala = ((((float64(suYear.Uccabala+elapsedDays) * 3 * 30) / 808) * 60) + 2) / 60
 	// Mean Uccabala = 6; 27 : 12
 	// Mean Uccabala = 207.2115
 
@@ -468,7 +461,7 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 
 	// step 17.
 
-	suDay.TrueMoon = suDay.MeanMoon - d
+	suDay.TrueMoon = math.Floor((suDay.MeanMoon-d)*10000) / 10000
 	// True Moon = 8; 7 : 43
 	// True Moon = 247.716666
 

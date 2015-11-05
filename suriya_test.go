@@ -186,6 +186,89 @@ Tithi: %d
 	}
 }
 
+func TestSuriyaDayInit(t *testing.T) {
+
+	var expectSuDays []SuriyaDay
+	var su SuriyaDay
+
+	su = SuriyaDay{
+		Year:        1963,
+		Day:         103, // 1963-07-05, 1 day before adhikavāra Asalha, Full Moon
+		BE_Year:     2506,
+		CS_Year:     1325,
+		Masaken:     16391,
+		Avoman:      249,
+		Horakhun:    484049,
+		Kammacubala: 64552,
+		Uccabala:    1860,
+		Tithi:       14,
+		TrueSun:     79.4832,
+		TrueMoon:    247.6955,
+	}
+	expectSuDays = append(expectSuDays, su)
+
+	su = SuriyaDay{
+		Year:        2015,
+		Day:         103 + 30, // adhikamāsa, 2015-07-30, Asalha, Full Moon
+		BE_Year:     2558,
+		CS_Year:     1377,
+		Masaken:     17035,
+		Avoman:      463,
+		Horakhun:    503067,
+		Kammacubala: 84188,
+		Uccabala:    1486,
+		Tithi:       14,
+		TrueSun:     104.5499,
+		TrueMoon:    275.4053,
+	}
+	expectSuDays = append(expectSuDays, su)
+
+	su = SuriyaDay{
+		Year:        2015,
+		Day:         103 + 30 - 15, // adhikamāsa, 2015-07-15, 15 days before Asalha, New Moon
+		BE_Year:     2558,
+		CS_Year:     1377,
+		Masaken:     17034,
+		Avoman:      298,
+		Horakhun:    503052,
+		Kammacubala: 72188,
+		Uccabala:    1471,
+		Tithi:       29,
+		TrueSun:     89.2166,
+		TrueMoon:    86.5874,
+	}
+	expectSuDays = append(expectSuDays, su)
+
+	fmtStr := `Year: %v
+Day: %v
+BE_Year: %v
+CS_Year: %v
+Masaken: %v
+Avoman: %v
+Horakhun: %v
+Kammacubala: %v
+Uccabala: %v
+Tithi: %v
+TrueSun: %v
+TrueMoon: %v
+`
+
+	for _, expectSu := range expectSuDays {
+		var su SuriyaDay
+		su.Init(expectSu.Year, expectSu.Day)
+
+		suStr := fmt.Sprintf(fmtStr, su.Year, su.Day, su.BE_Year, su.CS_Year, su.Masaken, su.Avoman, su.Horakhun, su.Kammacubala, su.Uccabala, su.Tithi, su.TrueSun, su.TrueMoon)
+
+		expectSuStr := fmt.Sprintf(fmtStr, expectSu.Year, expectSu.Day, expectSu.BE_Year, expectSu.CS_Year, expectSu.Masaken, expectSu.Avoman, expectSu.Horakhun, expectSu.Kammacubala, expectSu.Uccabala, expectSu.Tithi, expectSu.TrueSun, expectSu.TrueMoon)
+
+		if suStr != expectSuStr {
+			t.Errorf("expected: %s\n but got: %s\n", expectSuStr, suStr)
+			fmt.Printf("True Sun: %v\n", DegreeToEadeString(su.TrueSun))
+			fmt.Printf("True Moon: %v\n", DegreeToEadeString(su.TrueMoon))
+		}
+	}
+}
+
 func TestAsalhaPuja(t *testing.T) {
 	testYears := map[int]string{
 		1950: "1950-07-29", // myhora.com

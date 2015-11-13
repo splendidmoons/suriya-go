@@ -1,3 +1,4 @@
 *.swp
 *~
+utils/numbers.go
 auto/

@@ -157,7 +157,6 @@ func (su *SuriyaYear) calculateSuriyaValues() {
 	su.Kammacubala = KammacubalaDaily - a%KammacubalaDaily
 	// Kammacubala = 552
 
-	// 3232 is a "base" for 360 degrees, Calendrical p.48
 	su.Uccabala = (su.Horakhun + EraUccabala) % 3232
 	// Uccabala = 1780
 
@@ -174,7 +173,7 @@ func (su *SuriyaYear) calculateSuriyaValues() {
 }
 
 // (x; y : z) in Eade's notation means 30*60*x + 60*y + z in arcmins, so x and y are deg originally
-func DegreeToEade(degree float64) (x, y, z int) {
+func DegreeToRal(degree float64) (x, y, z int) {
 	// how many times 30 degrees
 	x = int(math.Floor(degree / 30))
 
@@ -188,12 +187,12 @@ func DegreeToEade(degree float64) (x, y, z int) {
 	return x, y, z
 }
 
-func DegreeToEadeString(degree float64) string {
-	u, v, t := DegreeToEade(degree)
-	return fmt.Sprintf("%d; %d : %d", u, v, t)
+func DegreeToRalString(degree float64) string {
+	u, v, t := DegreeToRal(degree)
+	return fmt.Sprintf("%d:%d°%d'", u, v, t)
 }
 
-func EadeToDegree(x, y, z int) float64 {
+func RalToDegree(x, y, z int) float64 {
 	// Multiply up and divide down by 10000 for better arcmin (z) accuracy
 	// Floor to keep only 4 decimal places
 	return math.Floor(float64(30*x+y)*10000+float64(z*10000)/60) / 10000
@@ -347,7 +346,7 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 	// Tithi of the day
 	suDay.Tithi = bi % MonthLength
 
-	var a, b, c, d float64
+	var a, b float64
 
 	// === B. Find the position of the Mean and true Sun on Asalha 15 ===
 
@@ -369,45 +368,52 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 	b = (a / EraDays) * 360
 	// b = 79.5282796100025
 
+	// The -3 arcmin is a geographical correction. Mentioned in "Interpolation..." and "Calendrical".
+
 	// (x; y : z) in Eade's notation means 30*60*x + 60*y + z in arcmins, so x and y are deg originally
-	x, y, z := DegreeToEade(b)
+	x, y, z := DegreeToRal(b)
 	z -= 3
 
-	// TODO: deal with negative min result
+	// Do convert the degree to Ral and back. If we only do b -= 3/60, we get
+	// slightly different results than in Eade's papers.
 
-	suDay.MeanSun = EadeToDegree(x, y, z)
+	suDay.MeanSun = RalToDegree(x, y, z)
 	// MeanSun = 2; 19 : 28
 	// MeanSun = 79.4666
 
-	b = math.Abs(suDay.MeanSun - EadeToDegree(2, 20, 0))
+	// The -80 degree is mentioned in Calendrical, sth to do with the Sun's Apogee?
+
+	a = math.Abs(suDay.MeanSun - 80)
 
 	// math.Sin takes radians
-	radconv := (2 * math.Pi) / 360
-	c = math.Floor(134 * math.Sin(b*radconv))
-	// c = math.Floor(1.2473)
-	// c = 1
+	radconv := math.Pi / 180
+	b = math.Floor(134 * math.Sin(a*radconv))
+	// b = math.Floor(1.2473)
+	// b = 1
 
-	suDay.TrueSun = math.Floor(suDay.MeanSun*10000+(c*10000)/60) / 10000
+	// Floor it to get degree only to 4th decimal place, to avoid results such as TrueSun: 79.48326666666667
+	suDay.TrueSun = math.Floor(suDay.MeanSun*10000+(b*10000)/60) / 10000
 	// TrueSun = 2; 19 : 29
 
 	// === C. Find the Mean and True Moon on Asalha 15 ===
 
-	// avoman of the date
-	c = float64(suDay.Avoman)
-	// c = 249
-
 	// step 12.
 
-	b = c + math.Floor(c/25)
-	// b = 258
-	// convert b to degree from minutes
-	b = b / 60
+	// divide with 60 to covert value in degrees from minutes
+	a = (float64(suDay.Avoman) + math.Floor(float64(suDay.Avoman)/25)) / 60
 	// 0; 4 : 17
 	// b = 4.3
 
 	// step 13.
 
-	suDay.MeanMoon = NormalizeDegree(suDay.TrueSun + b + (float64(suDay.Tithi) * 12) - EadeToDegree(0, 0, 40))
+	/* The -40 arcmin is a geographical correction. In "Interpolation...": The
+	routine subtraction of 3 arcmins is a geographical longitude correction for
+	the sun, as is the subtraction of 40 arcmins for the moon (sec. C13). */
+
+	// Use RalToDegree() instead of 40/60. RalToDegree() gives only a four decimal
+	// place value, which produces results closer to Eade's papers.
+
+	suDay.MeanMoon = NormalizeDegree(suDay.TrueSun + a + (float64(suDay.Tithi) * 12) - RalToDegree(0, 0, 40))
 	// Mean Moon: 8; 11 : 7
 	// Mean Moon: 251.116666
 
@@ -422,6 +428,8 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 
 	/*
 		Multiply with 30 to conform with (x; y : z) = 30*60*x + 60*y + z
+
+		808 / 30 is 26.9333, perhaps reproducing the length of the lunar month.
 
 		meanUccabala *= 30
 
@@ -444,7 +452,7 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 
 	// step 15.
 
-	b = suDay.MeanMoon - meanUccabala
+	a = suDay.MeanMoon - meanUccabala
 	// b = 1; 13 : 54
 	// b = 43.9051
 
@@ -452,23 +460,20 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 
 	// step 16.
 
-	d = 296 * math.Sin(b*radconv)
+	b = (296 * math.Sin(a*radconv)) / 60
 	// d = 0; 3 : 24
 	// d = 3.4
 
-	// convert to degrees
-	d = d / 60
-
 	// step 17.
 
-	suDay.TrueMoon = math.Floor((suDay.MeanMoon-d)*10000) / 10000
+	suDay.TrueMoon = math.Floor((suDay.MeanMoon-b)*10000) / 10000
 	// True Moon = 8; 7 : 43
 	// True Moon = 247.716666
 
 	// (0; 13:20) = 13.33 degree is one raek, i.e. 360 deg / 27 mansions
-	b = EadeToDegree(0, 13, 20)
+	a = RalToDegree(0, 13, 20)
 	// Raek aka Mula
-	suDay.Raek = suDay.TrueMoon/b + 1
+	suDay.Raek = suDay.TrueMoon/a + 1
 	// Raek = 0; 19 : 34
 	// Raek = 19.5771
 

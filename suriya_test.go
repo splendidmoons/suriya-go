@@ -263,8 +263,8 @@ TrueMoon: %v
 
 		if suStr != expectSuStr {
 			t.Errorf("expected: %s\n but got: %s\n", expectSuStr, suStr)
-			fmt.Printf("True Sun: %v\n", DegreeToEadeString(su.TrueSun))
-			fmt.Printf("True Moon: %v\n", DegreeToEadeString(su.TrueMoon))
+			fmt.Printf("True Sun: %v\n", DegreeToRalString(su.TrueSun))
+			fmt.Printf("True Moon: %v\n", DegreeToRalString(su.TrueMoon))
 		}
 	}
 }
@@ -370,8 +370,8 @@ func TestRaek(t *testing.T) {
 	// CS 1325, Raek 0; 19 : 34
 	// CS 1325 is adhikavāra
 	suDay.Init(1963, 103)
-	expect := "0; 19 : 34"
-	raekStr := DegreeToEadeString(suDay.Raek)
+	expect := "0:19°34'"
+	raekStr := DegreeToRalString(suDay.Raek)
 	if raekStr != expect {
 		t.Errorf("expected %s, but got %s", expect, raekStr)
 	}
@@ -379,8 +379,8 @@ func TestRaek(t *testing.T) {
 	// CS 1324, Raek 0; 20 : 38
 	// CS 1324 is common year
 	suDay.Init(1962, 103)
-	expect = "0; 20 : 39" // +1 arcmin diff to the value in the paper, probably rounding differences
-	raekStr = DegreeToEadeString(suDay.Raek)
+	expect = "0:20°39'" // +1 arcmin diff to the value in the paper, probably rounding differences
+	raekStr = DegreeToRalString(suDay.Raek)
 	if raekStr != expect {
 		t.Errorf("expected %s, but got %s", expect, raekStr)
 	}
@@ -389,8 +389,8 @@ func TestRaek(t *testing.T) {
 	// 15 days before Asalha
 	// 2015 is adhikamāsa
 	suDay.Init(2015, 103+30-15)
-	expect = "2; 26 : 35" // myhora.com: Moon is (2; 26 : 12)
-	raekStr = DegreeToEadeString(suDay.TrueMoon)
+	expect = "2:26°35'" // myhora.com: Moon is (2; 26 : 12)
+	raekStr = DegreeToRalString(suDay.TrueMoon)
 	if raekStr != expect {
 		t.Errorf("expected %s, but got %s", expect, raekStr)
 	}

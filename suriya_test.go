@@ -394,4 +394,32 @@ func TestRaek(t *testing.T) {
 	if raekStr != expect {
 		t.Errorf("expected %s, but got %s", expect, raekStr)
 	}
+
+	// 1288-04-14
+	// Example cited in Calendrical.
+	suDay.Init(1288, 41)
+	expect = "0:19°58'"
+	str := DegreeToRalString(suDay.TrueSun)
+	if str != expect {
+		t.Errorf("expected %s, but got %s", expect, str)
+	}
+	expect = "5:11°27'"
+	str = DegreeToRalString(suDay.TrueMoon)
+	if str != expect {
+		t.Errorf("expected %s, but got %s", expect, str)
+	}
+
+	// 1288-06-15
+	// Common year, Asalha Puja. Date is Full Moon on AstroPixels.
+	suDay.Init(1288, 103)
+	expect = "2:19°9'"
+	str = DegreeToRalString(suDay.TrueSun)
+	if str != expect {
+		t.Errorf("expected %s, but got %s", expect, str)
+	}
+	expect = "8:19°1'"
+	str = DegreeToRalString(suDay.TrueMoon)
+	if str != expect {
+		t.Errorf("expected %s, but got %s", expect, str)
+	}
 }

@@ -371,18 +371,28 @@ func TestRaek(t *testing.T) {
 	// CS 1325 is adhikavāra
 	suDay.Init(1963, 103)
 	expect := "0:19°34'"
-	raekStr := DegreeToRalString(suDay.Raek)
-	if raekStr != expect {
-		t.Errorf("expected %s, but got %s", expect, raekStr)
+	str := DegreeToRalString(suDay.Raek)
+	if str != expect {
+		t.Errorf("expected %s, but got %s", expect, str)
+	}
+	expect = "2:19°28'"
+	str = DegreeToRalString(suDay.TrueSun)
+	if str != expect {
+		t.Errorf("expected %s, but got %s", expect, str)
+	}
+	expect = "8:7°41'"
+	str = DegreeToRalString(suDay.TrueMoon)
+	if str != expect {
+		t.Errorf("expected %s, but got %s", expect, str)
 	}
 
 	// CS 1324, Raek 0; 20 : 38
 	// CS 1324 is common year
 	suDay.Init(1962, 103)
 	expect = "0:20°39'" // +1 arcmin diff to the value in the paper, probably rounding differences
-	raekStr = DegreeToRalString(suDay.Raek)
-	if raekStr != expect {
-		t.Errorf("expected %s, but got %s", expect, raekStr)
+	str = DegreeToRalString(suDay.Raek)
+	if str != expect {
+		t.Errorf("expected %s, but got %s", expect, str)
 	}
 
 	// 2015-07-15
@@ -390,16 +400,16 @@ func TestRaek(t *testing.T) {
 	// 2015 is adhikamāsa
 	suDay.Init(2015, 103+30-15)
 	expect = "2:26°35'" // myhora.com: Moon is (2; 26 : 12)
-	raekStr = DegreeToRalString(suDay.TrueMoon)
-	if raekStr != expect {
-		t.Errorf("expected %s, but got %s", expect, raekStr)
+	str = DegreeToRalString(suDay.TrueMoon)
+	if str != expect {
+		t.Errorf("expected %s, but got %s", expect, str)
 	}
 
 	// 1288-04-14
 	// Example cited in Calendrical.
 	suDay.Init(1288, 41)
 	expect = "0:19°58'"
-	str := DegreeToRalString(suDay.TrueSun)
+	str = DegreeToRalString(suDay.TrueSun)
 	if str != expect {
 		t.Errorf("expected %s, but got %s", expect, str)
 	}

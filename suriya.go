@@ -12,11 +12,11 @@ import (
 const (
 	EraDays          = 292207
 	EraYears         = 800
-	MonthLength      = 30
 	EraHorakhun      = 373 // The Horakhun at the beginning of the CS Era, Ephemeris p.15, H2 element
 	EraUccabala      = 2611
 	EraAvoman        = 650
 	EraMasaken       = 0
+	MonthLength      = 30
 	CycleTithi       = 703 // For every 692 solar days that elapse there are also 703 tithi = 692 + 11 / 692
 	CycleSolar       = 692
 	CycleDaily       = 11

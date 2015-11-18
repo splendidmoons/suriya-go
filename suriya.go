@@ -124,25 +124,7 @@ func (su *SuriyaYear) Init(ce_year int) {
 	su.Year = ce_year
 	su.BE_Year = su.Year + 543
 	su.CS_Year = su.Year - 638
-	su.calculateSuriyaValues()
-}
 
-func (su *SuriyaYear) SuriyaValuesString() string {
-	fmtStr := `CE: %d
-BE: %d
-CS: %d
-Horakhun: %d
-Kammacubala: %d
-Uccabala: %d
-Avoman: %d
-Masaken: %d
-Tithi: %d
-`
-
-	return fmt.Sprintf(fmtStr, su.Year, su.BE_Year, su.CS_Year, su.Horakhun, su.Kammacubala, su.Uccabala, su.Avoman, su.Masaken, su.Tithi)
-}
-
-func (su *SuriyaYear) calculateSuriyaValues() {
 	var a, b int // just helper variables
 
 	// Take CE 1963, CS 1325 (as in the paper: "Rules for Interpolation...")
@@ -172,7 +154,22 @@ func (su *SuriyaYear) calculateSuriyaValues() {
 	// Tithi = 23
 }
 
-// (x; y : z) in Eade's notation means 30*60*x + 60*y + z in arcmins, so x and y are deg originally
+func (su *SuriyaYear) SuriyaValuesString() string {
+	fmtStr := `CE: %d
+BE: %d
+CS: %d
+Horakhun: %d
+Kammacubala: %d
+Uccabala: %d
+Avoman: %d
+Masaken: %d
+Tithi: %d
+`
+
+	return fmt.Sprintf(fmtStr, su.Year, su.BE_Year, su.CS_Year, su.Horakhun, su.Kammacubala, su.Uccabala, su.Avoman, su.Masaken, su.Tithi)
+}
+
+// (x; y : z) in Rasi, Angsa (degree), Lipda (minute) means 30*60*x + 60*y + z in arcmins, so x and y are deg originally
 func DegreeToRal(degree float64) (x, y, z int) {
 	// how many times 30 degrees
 	x = int(math.Floor(degree / 30))
@@ -679,6 +676,9 @@ func NextUposatha(last_uposatha UposathaMoon) UposathaMoon {
 
 	return nu
 }
+
+/* TODO: Rewrite this to calculate based on year values. Stepping like this only
+works for a few years backward and forward. CE 1288 is off for example. */
 
 // Calculate the kattika full moon before this year
 func CalculatePreviousKattika(solar_year int) time.Time {

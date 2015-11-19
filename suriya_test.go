@@ -495,13 +495,13 @@ Tithi: %v
 	}
 
 	// Casting of the Buddha image at Wat Kiat. Eade has the duang inscription in the Mangrai Buddha paper.
-	suDay.Init(1565, 323)
-	expect = `Day: 323
-Date: 1566 Jan 28
-Horakhun: 338890
-Tithi: 27
-True Sun: 9:19°13'
-True Moon: 8:21°29'
+	suDay.Init(1565, 298)
+	expect = `Day: 298
+Date: 1566 Jan 3
+Horakhun: 338865
+Tithi: 2
+True Sun: 8:25°29'
+True Moon: 9:20°50'
 `
 	str = fmt.Sprintf(`Day: %v
 Date: %v

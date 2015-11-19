@@ -433,3 +433,92 @@ func TestRaek(t *testing.T) {
 		t.Errorf("expected %s, but got %s", expect, str)
 	}
 }
+
+func TestDay(t *testing.T) {
+	suDay := SuriyaDay{}
+	var expect, str string
+	dFmt := "2006 Jan 2"
+
+	// Test HorakhunRef constant
+	expect = horakhunRefStr
+	str = fmt.Sprintf("%v", HorakhunToDate(horakhunRef).Format(dFmt))
+	if str != expect {
+		t.Errorf("expected %s, but got %s", expect, str)
+	}
+
+	horakhunToDateStr := map[int64]string{
+		0:      "0638 Mar 24",
+		205184: "1200 Jan 1",
+		237396: "1288 Mar 11", // Citta 1, day 0
+		237430: "1288 Apr 14",
+		237437: "1288 Apr 21", // Eade has 1288 Apr 14. I'm getting correct Sun and Moon at -7d from his Horakhun
+		237499: "1288 Jun 22", // 1288 Jun 15, Eade -7d
+		338796: "1565 Oct 26", // 26 October 1565, at -10d from Eade in Mangrai Bhuddha he has 338806
+		351281: "1600 Jan 1",
+		387806: "1700 Jan 1",
+		408625: "1757 Jan 1",  // first date on myhora.com
+		408805: "1757 Jun 30", // day 103, myhora.com horakhun matches, but he marks it as Asalha Puja, 1 day off b/c it is adhikavāra year
+		483946: "1963 Mar 24", // Citta 1, day 0
+		484049: "1963 Jul 5",  // Asalha 14, day 103, adhikavāra year
+		502857: "2015 Jan 1",  // myhora.com
+	}
+
+	for horakhun, expect := range horakhunToDateStr {
+		str = fmt.Sprintf("%v", HorakhunToDate(horakhun).Format(dFmt))
+		if str != expect {
+			t.Errorf("expected %s, but got %s", expect, str)
+		}
+	}
+
+	// Horakhun 1. First day of the Era.
+	suDay.Init(638, 1)
+	expect = `Horakhun: 1
+Date: 0638 March 25
+True Sun: 0:2°38'
+True Moon: 0:20°30'
+Tithi: 1
+`
+	str = fmt.Sprintf(`Horakhun: %v
+Date: %v
+True Sun: %v
+True Moon: %v
+Tithi: %v
+`,
+		suDay.Horakhun,
+		HorakhunToDate(int64(suDay.Horakhun)).Format("2006 January 2"),
+		DegreeToRalString(suDay.TrueSun),
+		DegreeToRalString(suDay.TrueMoon),
+		suDay.Tithi,
+	)
+	if str != expect {
+		t.Errorf("expected %s, but got %s", expect, str)
+	}
+
+	// Casting of the Buddha image at Wat Kiat. Eade has the duang inscription in the Mangrai Buddha paper.
+	suDay.Init(1565, 323)
+	expect = `Day: 323
+Date: 1566 Jan 28
+Horakhun: 338890
+Tithi: 27
+True Sun: 9:19°13'
+True Moon: 8:21°29'
+`
+	str = fmt.Sprintf(`Day: %v
+Date: %v
+Horakhun: %v
+Tithi: %v
+True Sun: %v
+True Moon: %v
+`,
+		suDay.Day,
+		HorakhunToDate(int64(suDay.Horakhun)).Format("2006 Jan 2"),
+		suDay.Horakhun,
+		suDay.Tithi,
+		DegreeToRalString(suDay.TrueSun),
+		DegreeToRalString(suDay.TrueMoon),
+	)
+	if str != expect {
+		t.Errorf("expected %s, but got %s", expect, str)
+	}
+
+}

@@ -21,6 +21,14 @@ const (
 	CycleSolar       = 692
 	CycleDaily       = 11
 	KammacubalaDaily = 800 // Daily increase
+	CSdiff           = 638 // Absolute of CE - CS Era difference
+	BEdiff           = 543 // Absolute of BE - CS Era difference
+
+	// 1963 July 5, adhikavāra year, day 103, 1 day before Asalha Full Moon.
+	// Eade uses this example in "Interpolation".
+	horakhunRef    = 484049
+	horakhunRefStr = "1963 Jul 5"
+	//horakhunRefDate = time.Parse("2002 Jan 2", "1963 Jul 5")
 )
 
 // Whether to apply the (adhikavāra) exceptions where the official calendar
@@ -44,6 +52,7 @@ type SuriyaYear struct {
 	Avoman      int // For the Moon's mean motion
 	Masaken     int // Elapsed months of the era
 	Tithi       int // Age of the moon at the start of the year, aka Thaloengsok or New Year's Day
+	FirstDay    time.Time
 }
 
 type SuriyaDay struct {
@@ -51,6 +60,7 @@ type SuriyaDay struct {
 	BE_Year     int // Buddhist Era, CE + 543
 	CS_Year     int // Chulasakkarat Era, CE - 638
 	Day         int // nth day in the Lunar Year
+	Date        time.Time
 	Horakhun    int
 	Kammacubala int
 	Uccabala    int
@@ -122,8 +132,8 @@ func (su SuriyaYear) String() string {
 
 func (su *SuriyaYear) Init(ce_year int) {
 	su.Year = ce_year
-	su.BE_Year = su.Year + 543
-	su.CS_Year = su.Year - 638
+	su.BE_Year = su.Year + BEdiff
+	su.CS_Year = su.Year - CSdiff
 
 	var a, b int // just helper variables
 
@@ -313,8 +323,8 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 	suYear.Init(ce_year)
 
 	suDay.Year = ce_year
-	suDay.BE_Year = ce_year + 543
-	suDay.CS_Year = ce_year - 638
+	suDay.BE_Year = ce_year + BEdiff
+	suDay.CS_Year = ce_year - CSdiff
 	suDay.Day = lunar_year_day
 
 	// This is elapsedDays = suDay.Horakhun - suYear.Horakhun, but the meaning is
@@ -474,6 +484,33 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 	// Raek = 0; 19 : 34
 	// Raek = 19.5771
 
+}
+
+func HorakhunToDate(horakhun int64) time.Time {
+	// Make sure it is not a pointer to horakhunRefDate, but is the same time.
+	date, _ := time.Parse("2006 Jan 2", horakhunRefStr)
+	// At midnight
+	date = date.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+
+	var delta, stepDays, direction int64
+
+	// Duration is max 290 solar years. Increment the date in 290 year steps.
+
+	delta = horakhun - horakhunRef
+	if delta < 0 {
+		direction = -1
+	} else {
+		direction = 1
+	}
+	stepDays = 290 * 356
+	for math.Abs(float64(delta)) > float64(stepDays) {
+		date = date.Add(time.Duration(direction*stepDays) * time.Hour * 24)
+		delta += direction * -1 * stepDays
+	}
+	// Add any remaining delta.
+	date = date.Add(time.Duration(delta) * time.Hour * 24)
+
+	return date
 }
 
 var monthToInt = map[string]int{
@@ -742,7 +779,7 @@ func GenerateSolarYear(solar_year int) []SimpleCalDay {
 		M_Days:      29,
 		LunarMonth:  12,
 		LunarSeason: 3,
-		LunarYear:   date.Year() + 543,
+		LunarYear:   date.Year() + BEdiff,
 	}
 
 	for last_uposatha.Date.Year() <= solar_year {

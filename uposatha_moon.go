@@ -1,6 +1,9 @@
 package suriya
 
 import (
+	"fmt"
+	"github.com/soh335/ical"
+	s "strings"
 	"time"
 )
 
@@ -18,6 +21,8 @@ type UposathaMoon struct {
 	LunarSeason   int    // 1-3, an int code to an []string array of names
 	LunarYear     int
 	HasAdhikavara bool
+	Source        string
+	Comments      string
 }
 
 func (last_uposatha UposathaMoon) NextUposatha() UposathaMoon {
@@ -155,4 +160,25 @@ func (last_uposatha UposathaMoon) NextUposatha() UposathaMoon {
 	nu.Date = lu.Date.Add(time.Duration(nu.U_Days) * time.Hour * 24)
 
 	return nu
+}
+
+func (m UposathaMoon) AddToDay(day_p *CalDay) {
+	day_p.Date = m.Date
+	day_p.SetUposathaMoon(m)
+	return
+}
+
+func (m UposathaMoon) GetDate() time.Time {
+	return m.Date
+}
+
+func (m UposathaMoon) String() string {
+	if len(m.Phase) != 0 {
+		return fmt.Sprintf("%s Moon - %d day %s %d/%d", s.Title(m.Phase), m.U_Days, SeasonName(m.LunarSeason), m.S_Number, m.S_Total)
+	}
+	return ""
+}
+
+func (m UposathaMoon) IcalEvent() ical.VEvent {
+	return icalEvent(m)
 }

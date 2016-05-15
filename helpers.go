@@ -108,71 +108,66 @@ func CalculatePreviousKattika(solar_year int) time.Time {
 	return kattika_date
 }
 
-type SimpleCalDay struct {
-	Date  time.Time
-	Phase string // full, waning, new, waxing
-	Event string // magha, vesakha, asalha, pavarana
+var monthToInt = map[string]int{
+	"null":       0,
+	"magasira":   1,
+	"phussa":     2,
+	"magha":      3,
+	"phagguna":   4,
+	"citta":      5,
+	"vesakha":    6,
+	"jettha":     7,
+	"asalha":     8,
+	"savana":     9,
+	"bhaddapada": 10,
+	"assayuja":   11,
+	"kattika":    12,
+	"2nd asalha": 13,
 }
 
-func GenerateSolarYear(solar_year int) []SimpleCalDay {
+func MonthToInt(month string) int {
+	return monthToInt[month]
+}
 
-	var days []SimpleCalDay
+var seasonToInt = map[string]int{
+	"null":    0,
+	"hemanta": 1,
+	"gimhana": 2,
+	"vassana": 3,
+}
 
-	var su_year SuriyaYear
-	su_year.Init(solar_year)
+func SeasonToInt(season string) int {
+	return seasonToInt[season]
+}
 
-	date := CalculatePreviousKattika(solar_year)
+var seasonName = map[int]string{
+	0: "",
+	1: "Hemanta",
+	2: "Gimha",
+	3: "Vassāna",
+}
 
-	last_uposatha := UposathaMoon{
-		Date:        date,
-		Calendar:    0, // mahanikaya
-		Phase:       "full",
-		S_Number:    8,
-		S_Total:     8,
-		U_Days:      15,
-		M_Days:      29,
-		LunarMonth:  12,
-		LunarSeason: 3,
-		LunarYear:   date.Year() + BEdiff,
-	}
+func SeasonName(number int) string {
+	return seasonName[number]
+}
 
-	for last_uposatha.Date.Year() <= solar_year {
-		var uposatha UposathaMoon
-		var day SimpleCalDay
-		uposatha = last_uposatha.NextUposatha()
-		last_uposatha = uposatha
+var calendarToInt = map[string]int{
+	"mahanikaya": 0,
+	"dhammayut":  1,
+	"srilanka":   2,
+	"myanmar":    3,
+}
 
-		// Uposatha
+func CalendarToInt(calendar string) int {
+	return calendarToInt[calendar]
+}
 
-		day.Date = uposatha.Date
-		day.Phase = uposatha.Phase
-		day.Event = uposatha.Event
+var statusToInt = map[string]int{
+	"draft":     0,
+	"predicted": 1,
+	"confirmed": 2,
+}
 
-		if uposatha.Date.Year() == solar_year {
-			days = append(days, day)
-		}
-
-		// Half Moon
-
-		var phase string
-		switch uposatha.Phase {
-		case "new":
-			phase = "waxing"
-		case "full":
-			phase = "waning"
-		}
-
-		day = SimpleCalDay{
-			Date:  uposatha.Date.AddDate(0, 0, 8),
-			Phase: phase,
-			Event: "",
-		}
-
-		if day.Date.Year() == solar_year {
-			days = append(days, day)
-		}
-
-	}
-
-	return days
+func StatusToInt(status string) int {
+	return statusToInt[status]
 }

@@ -1,4 +1,6 @@
 *.swp
 *~
 utils/numbers.go
+suriya/suriya
+suriya/*.json
 auto/

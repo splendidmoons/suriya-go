@@ -1,0 +1,8 @@
+
+Create =data.go= with:
+
+: esc -pkg suriya -o data.go ./data
+
+https://github.com/mjibson/esc
+
+http://mattjibson.com/blog/2014/11/19/esc-embedding-static-assets/

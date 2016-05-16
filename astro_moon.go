@@ -83,7 +83,7 @@ func GetAstroMoons(fromDate time.Time, toDate time.Time) (moons []AstroMoon) {
 
 		for _, aemoon := range resp.Response {
 			var m AstroMoon
-			m.Date = aemoon.DateTimeISO
+			m.Date = aemoon.DateTimeISO.UTC()
 			if m.Date.Before(fromDate) || m.Date.After(toDate) {
 				continue
 			}

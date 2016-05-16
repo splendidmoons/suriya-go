@@ -234,15 +234,11 @@ func GenerateSolarYear(solar_year int) []CalendarEvent {
 
 		// Major Events
 
-		// If it is this year, Full Moon, and Mahanikaya
-		if uposatha.Date.Year() == solar_year &&
-			uposatha.Phase == "full" &&
-			uposatha.Calendar == CalendarToInt("mahanikaya") {
+		if uposatha.Date.Year() == solar_year {
 
 			var e MajorEvent
 
-			// Magha Puja
-			if uposatha.LunarMonth == MonthToInt("magha") {
+			if uposatha.Event == "magha" {
 				e = MajorEvent{
 					Date:        uposatha.Date,
 					Calendar:    uposatha.Calendar,
@@ -252,8 +248,7 @@ func GenerateSolarYear(solar_year int) []CalendarEvent {
 				events = append(events, e)
 			}
 
-			// Visakha Puja
-			if uposatha.LunarMonth == MonthToInt("visakha") {
+			if uposatha.Event == "vesakha" {
 				e = MajorEvent{
 					Date:        uposatha.Date,
 					Calendar:    uposatha.Calendar,
@@ -263,10 +258,7 @@ func GenerateSolarYear(solar_year int) []CalendarEvent {
 				events = append(events, e)
 			}
 
-			// Asalha Puja
-			// check for 2nd Asalha too
-			if uposatha.LunarMonth == MonthToInt("2nd asalha") ||
-				uposatha.LunarMonth == MonthToInt("asalha") {
+			if uposatha.Event == "asalha" {
 				e = MajorEvent{
 					Date:        uposatha.Date,
 					Calendar:    uposatha.Calendar,
@@ -275,7 +267,6 @@ func GenerateSolarYear(solar_year int) []CalendarEvent {
 				}
 				events = append(events, e)
 
-				// First day of Vassa
 				e = MajorEvent{
 					Date:        uposatha.Date.AddDate(0, 0, 1),
 					Calendar:    uposatha.Calendar,
@@ -286,7 +277,7 @@ func GenerateSolarYear(solar_year int) []CalendarEvent {
 			}
 
 			// Pavarana Day
-			if uposatha.LunarMonth == MonthToInt("assayuja") {
+			if uposatha.Event == "pavarana" {
 				e = MajorEvent{
 					Date:        uposatha.Date,
 					Calendar:    uposatha.Calendar,

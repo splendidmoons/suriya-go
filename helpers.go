@@ -118,11 +118,11 @@ var monthToInt = map[string]int{
 	"vesakha":    6,
 	"jettha":     7,
 	"asalha":     8,
+	"2nd asalha": 13,
 	"savana":     9,
 	"bhaddapada": 10,
 	"assayuja":   11,
 	"kattika":    12,
-	"2nd asalha": 13,
 }
 
 func MonthToInt(month string) int {

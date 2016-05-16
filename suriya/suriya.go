@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/codegangsta/cli"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/soh335/ical"
 	"github.com/splendidmoons/suriya-go"
 	"log"
 	"os"
@@ -43,15 +45,18 @@ func cliInit(c *cli.Context) (dates map[string]time.Time) {
 	return dates
 }
 
-func actionCalDays(c *cli.Context) {
+func actionCalDays(c *cli.Context) error {
 	dates := cliInit(c)
 
 	// group the days by year
 	var days_by_year = make(map[string][]suriya.CalDay)
 
-	for year := dates["fromDate"].Year(); year <= dates["toDate"].Year(); year++ {
-		cal_days := suriya.GetCalDays(dates["fromDate"], dates["toDate"])
-		days_by_year[fmt.Sprintf("%d", year)] = cal_days
+	// GetCalDays returns sorted days
+	cal_days := suriya.GetCalDays(dates["fromDate"], dates["toDate"])
+
+	for _, day := range cal_days {
+		y := fmt.Sprintf("%d", day.Date.Year())
+		days_by_year[y] = append(days_by_year[y], day)
 	}
 
 	a, err := json.Marshal(days_by_year)
@@ -77,6 +82,111 @@ func actionCalDays(c *cli.Context) {
 	} else {
 		fmt.Printf("%s\n", str)
 	}
+
+	return nil
+}
+
+func actionIcal(c *cli.Context) error {
+	dates := cliInit(c)
+
+	// GetCalDays returns sorted days
+	cal_days := suriya.GetCalDays(dates["fromDate"], dates["toDate"])
+
+	// https://tools.ietf.org/html/draft-ietf-calext-extensions-01
+
+	/*
+		  http://stackoverflow.com/a/17187346/195141
+
+			BEGIN:VCALENDAR
+			VERSION:2.0
+			PRODID:-//My Company//NONSGML Event Calendar//EN
+			URL:http://my.calendar/url
+			NAME:My Calendar Name
+			X-WR-CALNAME:My Calendar Name
+			DESCRIPTION:A description of my calendar
+			X-WR-CALDESC:A description of my calendar
+			TIMEZONE-ID:Europe/London
+			X-WR-TIMEZONE:Europe/London
+			REFRESH-INTERVAL;VALUE=DURATION:PT12H
+			X-PUBLISHED-TTL:PT12H
+			COLOR:34:50:105
+			CALSCALE:GREGORIAN
+			METHOD:PUBLISH
+	*/
+
+	calendar := "mahanikaya"
+	calendarTxt := "Mahānikāya"
+	calendarName := "Uposatha Moondays (" + calendarTxt + ")"
+
+	icalendar := ical.VCalendar{
+		VERSION:      "2.0",
+		PRODID:       "Uposatha Moondays " + calendarTxt + " EN",
+		URL:          "http://splendidmoons.github.io/ical/" + calendar + ".ical",
+		NAME:         calendarName,
+		X_WR_CALNAME: calendarName,
+		DESCRIPTION:  calendarName,
+		X_WR_CALDESC: calendarName,
+		//TIMEZONE_ID:      "Europe/London",
+		//X_WR_TIMEZONE:    "Europe/London",
+		REFRESH_INTERVAL: "PT12H",
+		X_PUBLISHED_TTL:  "PT12H",
+		COLOR:            "244:196:48", // Saffron
+		CALSCALE:         "GREGORIAN",
+		METHOD:           "PUBLISH",
+	}
+
+	for _, day := range cal_days {
+
+		// UposathaMoon[0]
+		// HalfMoon[0]
+		// NOT AstroMoon[0]
+		// MajorEvents[]
+		// Events[]
+
+		if len(day.UposathaMoon) != 0 {
+			e := day.UposathaMoon[0].IcalEvent()
+			icalendar.VComponent = append(icalendar.VComponent, &e)
+		}
+
+		if len(day.HalfMoon) != 0 {
+			e := day.HalfMoon[0].IcalEvent()
+			icalendar.VComponent = append(icalendar.VComponent, &e)
+		}
+
+		for _, d := range day.MajorEvents {
+			e := d.IcalEvent()
+			icalendar.VComponent = append(icalendar.VComponent, &e)
+		}
+
+		for _, d := range day.Events {
+			e := d.IcalEvent()
+			icalendar.VComponent = append(icalendar.VComponent, &e)
+		}
+
+	}
+
+	buf := bytes.NewBufferString("")
+	icalendar.Encode(buf)
+	str := buf.String()
+
+	if len(c.String("output")) > 0 {
+		f, err := os.OpenFile(c.String("output"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Printf("%v\n", err)
+			os.Exit(1)
+		}
+		defer f.Close()
+
+		_, err = f.WriteString(str)
+		if err != nil {
+			log.Printf("%v\n", err)
+			os.Exit(1)
+		}
+	} else {
+		fmt.Printf("%s", str)
+	}
+
+	return nil
 }
 
 func main() {
@@ -104,6 +214,12 @@ func main() {
 			Name:   "caldays",
 			Usage:  "CalDays JSON output for splendidmoons",
 			Action: actionCalDays,
+			Flags:  commonFlags,
+		},
+		{
+			Name:   "ical",
+			Usage:  "Icalendar output for splendidmoons",
+			Action: actionIcal,
 			Flags:  commonFlags,
 		},
 	}

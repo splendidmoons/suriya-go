@@ -8,7 +8,7 @@ import (
 /*
 The major calendar events for convenient access.
 - Magha Puja
-- Visakha Puja
+- Vesakha Puja
 - Asalha Puja
 - Vassa begins
 - Pavarana Day

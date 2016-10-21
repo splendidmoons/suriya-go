@@ -71,7 +71,7 @@ func (suDay *SuriyaDay) Init(ce_year int, lunar_year_day int) {
 
 	// Length of the months, Thai months ending on New Moon:
 	// Citta   Full + New = 15+14
-	// Visakha Full + New = 15+15
+	// Vesakha Full + New = 15+15
 	// Jettha  Full + New = 15+14
 	// Asalha  Full       = 15
 	// ---------------------------

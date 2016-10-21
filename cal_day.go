@@ -248,12 +248,12 @@ func GenerateSolarYear(solar_year int) []CalendarEvent {
 				events = append(events, e)
 			}
 
-			if uposatha.Event == "visakha" {
+			if uposatha.Event == "vesakha" {
 				e = MajorEvent{
 					Date:        uposatha.Date,
 					Calendar:    uposatha.Calendar,
-					Summary:     "Visākha Pūjā",
-					Description: "Visākha Pūjā",
+					Summary:     "Vesākha Pūjā",
+					Description: "Vesākha Pūjā",
 				}
 				events = append(events, e)
 			}

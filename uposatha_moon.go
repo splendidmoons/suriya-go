@@ -12,7 +12,7 @@ type UposathaMoon struct {
 	Calendar      int    // 0 mahanikaya, 1 dhammayut, 2 srilanka, 3 myanmar
 	Status        int    // 0 draft, 1 predicted, 2 confirmed
 	Phase         string // only new or full. waxing and waning will be derived.
-	Event         string // magha, vesakha, asalha, pavarana
+	Event         string // magha, visakha, asalha, pavarana
 	S_Number      int    // 1 of 8 in Hemanta
 	S_Total       int    // total number of uposathas in the season, 8 in Hemanta
 	U_Days        int    // uposatha days, 14 or 15
@@ -60,7 +60,7 @@ func (last_uposatha UposathaMoon) NextUposatha() UposathaMoon {
 		nu.LunarYear = lu.LunarYear
 		nu.HasAdhikavara = false // Adhikavara is only added to New Moons
 
-		// Event: magha, vesakha, asalha, pavarana
+		// Event: magha, visakha, asalha, pavarana
 
 		// In Adhikamāsa Years the major moons shift with one month
 		if is_adhikamasa_year {
@@ -68,7 +68,7 @@ func (last_uposatha UposathaMoon) NextUposatha() UposathaMoon {
 			case 4:
 				nu.Event = "magha"
 			case 7:
-				nu.Event = "vesakha"
+				nu.Event = "visakha"
 			case 13:
 				nu.Event = "asalha"
 			case 11:
@@ -82,7 +82,7 @@ func (last_uposatha UposathaMoon) NextUposatha() UposathaMoon {
 			case 3:
 				nu.Event = "magha"
 			case 6:
-				nu.Event = "vesakha"
+				nu.Event = "visakha"
 			case 8:
 				nu.Event = "asalha"
 			case 11:

@@ -115,7 +115,7 @@ var monthToInt = map[string]int{
 	"magha":      3,
 	"phagguna":   4,
 	"citta":      5,
-	"vesakha":    6,
+	"visakha":    6,
 	"jettha":     7,
 	"asalha":     8,
 	"2nd asalha": 13,

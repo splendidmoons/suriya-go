@@ -88,9 +88,17 @@ func GetAstroMoons(fromDate time.Time, toDate time.Time) (moons []AstroMoon) {
 				continue
 			}
 			m.Phase = phaseCodes[aemoon.Code]
-			if m.Phase == "full" || m.Phase == "new" {
-				moons = append(moons, m)
-			}
+
+			// Not filtering the phase. First- and Last Quarter is
+			// used in the year planner PDF. If need to regenerate
+			// JSON for splendidmoons.github.io, filter the return
+			// value instead here.
+			//
+			// if m.Phase == "full" || m.Phase == "new" {
+			// 	moons = append(moons, m)
+			// }
+
+			moons = append(moons, m)
 		}
 	}
 
